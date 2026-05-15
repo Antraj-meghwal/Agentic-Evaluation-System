@@ -18,9 +18,6 @@ export default function Navbar() {
     const { logout } = useAuth()
 
 
-    // -----------------------------------
-    // Handle logout
-    // -----------------------------------
     function handleLogout() {
 
         logout()
