@@ -1,0 +1,15 @@
+2026-05-14 16:07:19.196 IST [66523] LOG:  starting PostgreSQL 18.3 on x86_64-apple-darwin24.6.0, compiled by Apple clang version 17.0.0 (clang-1700.6.3.2), 64-bit
+2026-05-14 16:07:19.197 IST [66523] LOG:  listening on IPv6 address "::1", port 5432
+2026-05-14 16:07:19.198 IST [66523] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-05-14 16:07:19.198 IST [66523] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2026-05-14 16:07:19.200 IST [66529] LOG:  database system was shut down at 2026-05-14 16:05:53 IST
+2026-05-14 16:07:19.201 IST [66523] LOG:  database system is ready to accept connections
+2026-05-14 16:12:19.198 IST [66527] LOG:  checkpoint starting: time
+2026-05-14 16:13:59.188 IST [66527] LOG:  checkpoint complete: wrote 988 buffers (6.0%), wrote 3 SLRU buffers; 1 WAL file(s) added, 0 removed, 0 recycled; write=99.972 s, sync=0.008 s, total=99.991 s; sync files=311, longest=0.001 s, average=0.001 s; distance=4677 kB, estimate=4677 kB; lsn=0/1C18688, redo lsn=0/1C185F8
+2026-05-14 16:16:33.852 IST [67718] FATAL:  role "postgres" does not exist
+2026-05-14 16:22:19.144 IST [66527] LOG:  checkpoint starting: time
+2026-05-14 16:22:24.327 IST [66527] LOG:  checkpoint complete: wrote 51 buffers (0.3%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=5.177 s, sync=0.003 s, total=5.183 s; sync files=43, longest=0.001 s, average=0.001 s; distance=205 kB, estimate=4230 kB; lsn=0/1C4BDB0, redo lsn=0/1C4BD20
+2026-05-14 18:11:34.381 IST [66527] LOG:  checkpoint starting: time
+2026-05-14 18:11:35.903 IST [66527] LOG:  checkpoint complete: wrote 15 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.520 s, sync=0.001 s, total=1.523 s; sync files=11, longest=0.001 s, average=0.001 s; distance=44 kB, estimate=3811 kB; lsn=0/1C56DF0, redo lsn=0/1C56D98
+2026-05-14 18:36:34.897 IST [66527] LOG:  checkpoint starting: time
+2026-05-14 18:36:35.305 IST [66527] LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.406 s, sync=0.001 s, total=0.409 s; sync files=5, longest=0.001 s, average=0.001 s; distance=1 kB, estimate=3430 kB; lsn=0/1C572A8, redo lsn=0/1C57250
