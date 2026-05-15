@@ -1,16 +1,12 @@
 import axios from "axios"
 
 
-// Backend base URL
 const API = axios.create({
 
     baseURL: "http://127.0.0.1:8000"
 })
 
 
-// -----------------------------------
-// Attach JWT token automatically
-// -----------------------------------
 API.interceptors.request.use(
 
     (config) => {
@@ -28,5 +24,6 @@ API.interceptors.request.use(
         return config
     }
 )
+
 
 export default API
