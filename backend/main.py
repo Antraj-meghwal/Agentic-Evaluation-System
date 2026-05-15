@@ -11,17 +11,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 from database import Base
 
+# Import models
+from models.user_model import User
+from models.upload_model import UploadedFile
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
 # Import routes
 from routes.upload_routes import router as upload_router
 
-
-# Create DB tables
-Base.metadata.create_all(bind=engine)
+from routes.grading_routes import (
+    router as grading_router
+)
 
 
 # Create app
 app = FastAPI()
-
+app.include_router(grading_router)
 
 # Enable CORS
 app.add_middleware(
@@ -56,4 +63,24 @@ def home():
     return {
 
         "message": "GradeOps Backend Running"
+    }
+
+
+
+#import
+from routes.user_routes import (
+    router as user_router
+)
+app.include_router(user_router)
+
+
+
+
+
+
+@app.get("/test-db")
+def test_db():
+
+    return {
+        "message": "DB working"
     }

@@ -1,5 +1,16 @@
-venv/
+# macOS
+.DS_Store
+
+# Python
 __pycache__/
 *.pyc
-.envtouch 
+venv/
+
+# Environment files
 .env
+
+# Logs
+logfile
+
+# Node
+node_modules/
