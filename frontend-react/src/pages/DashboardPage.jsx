@@ -1,74 +1,109 @@
+import {
+
+    useEffect,
+
+    useState
+
+} from "react"
+
+import {
+
+    useNavigate
+
+} from "react-router-dom"
+
 import Navbar from "../components/Navbar"
+
+import StatCard from "../components/StatCard"
+
+import API from "../services/api"
+
+
 export default function DashboardPage() {
 
-return (
+    const navigate = useNavigate()
 
-    <div className="min-h-screen bg-slate-950 text-white">
+    const [uploadCount, setUploadCount]
+        = useState(0)
 
-        <Navbar />
 
-        <div className="p-10">
+    useEffect(() => {
 
-            <h1 className="text-5xl font-bold mb-10">
+        async function fetchUploads() {
 
-                Dashboard
+            try {
 
-            </h1>
+                const response =
+                    await API.get("/uploads")
 
-            <div className="grid grid-cols-3 gap-6">
+                setUploadCount(
+                    response.data.length
+                )
 
-                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+            } catch (error) {
 
-                    <h2 className="text-2xl font-semibold">
+                console.log(error)
+            }
+        }
 
-                        Uploads
+        fetchUploads()
 
-                    </h2>
+    }, [])
 
-                    <p className="text-slate-400 mt-2">
 
-                        Track uploaded answer sheets.
+    return (
 
-                    </p>
+        <div className="min-h-screen bg-slate-950 text-white">
 
-                </div>
+            <Navbar />
 
-                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+            <div className="p-10">
 
-                    <h2 className="text-2xl font-semibold">
+                <h1 className="text-6xl font-bold mb-3">
 
-                        AI Grading
+                    Dashboard
 
-                    </h2>
+                </h1>
 
-                    <p className="text-slate-400 mt-2">
+                <p className="text-slate-400 text-lg mb-12">
 
-                        Monitor grading pipeline.
+                    AI Evaluation Workflow Overview
 
-                    </p>
+                </p>
 
-                </div>
+                <div className="grid md:grid-cols-3 gap-6">
 
-                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                    <StatCard
+                        title="Uploads"
+                        value={uploadCount}
+                        subtitle="Uploaded answer sheets"
+                        onClick={() =>
+                            navigate("/uploads")
+                        }
+                    />
 
-                    <h2 className="text-2xl font-semibold">
+                    <StatCard
+                        title="Upload"
+                        value="+"
+                        subtitle="Upload new answer sheets"
+                        onClick={() =>
+                            navigate("/upload")
+                        }
+                    />
 
-                        Reviews
-
-                    </h2>
-
-                    <p className="text-slate-400 mt-2">
-
-                        Human-in-the-loop approvals.
-
-                    </p>
+                    <StatCard
+                        title="Reviews"
+                        value="0"
+                        subtitle="Pending human reviews"
+                        onClick={() =>
+                            navigate("/review")
+                        }
+                    />
 
                 </div>
 
             </div>
 
         </div>
-
-    </div>
-)
+    )
 }

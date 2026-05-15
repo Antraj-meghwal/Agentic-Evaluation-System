@@ -21,13 +21,11 @@ export function AuthProvider({ children }) {
         localStorage.getItem("token")
     )
 
+
     const [isAuthenticated, setIsAuthenticated]
         = useState(!!token)
 
 
-    // -----------------------------------
-    // Login
-    // -----------------------------------
     function login(jwtToken) {
 
         localStorage.setItem(
@@ -41,9 +39,6 @@ export function AuthProvider({ children }) {
     }
 
 
-    // -----------------------------------
-    // Logout
-    // -----------------------------------
     function logout() {
 
         localStorage.removeItem("token")
@@ -54,9 +49,6 @@ export function AuthProvider({ children }) {
     }
 
 
-    // -----------------------------------
-    // Auto-check token
-    // -----------------------------------
     useEffect(() => {
 
         const storedToken =
@@ -92,7 +84,6 @@ export function AuthProvider({ children }) {
 }
 
 
-// Custom hook
 export function useAuth() {
 
     return useContext(AuthContext)

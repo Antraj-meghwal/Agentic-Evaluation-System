@@ -23,12 +23,11 @@ export default function ProtectedRoute({
     } = useAuth()
 
 
-    // Not logged in
     if (!isAuthenticated) {
 
         return <Navigate to="/" />
     }
 
-    // Logged in
+
     return children
 }
