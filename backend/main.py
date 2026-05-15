@@ -1,22 +1,29 @@
-# Import FastAPI framework
-from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-# Used to copy uploaded files
-import shutil
+# FastAPI core
+from fastapi import FastAPI
 
-# Used for serving static files
+# Static file serving
 from fastapi.staticfiles import StaticFiles
 
+# CORS middleware
+from fastapi.middleware.cors import CORSMiddleware
 
-# Create FastAPI app
+# Database setup
+from database import engine
+from database import Base
+
+# Import routes
+from routes.upload_routes import router as upload_router
+
+
+# Create DB tables
+Base.metadata.create_all(bind=engine)
+
+
+# Create app
 app = FastAPI()
 
 
-# -----------------------------------
 # Enable CORS
-# -----------------------------------
-# Allows frontend to talk to backend
-
 app.add_middleware(
     CORSMiddleware,
 
@@ -29,7 +36,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Serve uploads folder
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
+)
+
+
+# Register upload routes
+app.include_router(upload_router)
 
 
 # Home route
@@ -37,26 +54,6 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 def home():
 
     return {
+
         "message": "GradeOps Backend Running"
-    }
-
-
-# Upload route
-@app.post("/upload")
-def upload_file(file: UploadFile = File(...)):
-
-    # Path where file will be saved
-    file_location = f"uploads/{file.filename}"
-
-    # Open file in write-binary mode
-    with open(file_location, "wb") as buffer:
-
-        # Copy uploaded file into uploads folder
-        shutil.copyfileobj(file.file, buffer)
-
-    # Return response
-    return {
-        "filename": file.filename,
-        "message": "File uploaded successfully",
-        "file_url": f"http://127.0.0.1:8000/uploads/{file.filename}"
     }
