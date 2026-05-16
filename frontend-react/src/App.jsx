@@ -1,42 +1,19 @@
-import {
-
-    BrowserRouter,
-
-    Routes,
-
-    Route
-
-} from "react-router-dom"
-
-
-import LoginPage from "./pages/LoginPage"
-
-import DashboardPage from "./pages/DashboardPage"
-
-import UploadPage from "./pages/UploadPage"
-
-import UploadsPage from "./pages/UploadsPage"
-
-import UploadDetailsPage from "./pages/UploadDetailsPage"
-
-import ReviewPage from "./pages/ReviewPage"
-
-import ProtectedRoute from "./routes/ProtectedRoute"
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import UploadPage from "./pages/UploadPage";
+import UploadsPage from "./pages/UploadsPage";
+import UploadDetailsPage from "./pages/UploadDetailsPage";
+import ReviewPage from "./pages/ReviewPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
-
     return (
-
         <BrowserRouter>
-
             <Routes>
+                <Route path="/" element={<LoginPage />} />
 
-                <Route
-                    path="/"
-                    element={<LoginPage />}
-                />
-
+                {/* Dashboard routes intelligently based on role */}
                 <Route
                     path="/dashboard"
                     element={
@@ -46,19 +23,21 @@ export default function App() {
                     }
                 />
 
+                {/* Strict Role Guarding: Only Professor/Admin can upload */}
                 <Route
                     path="/upload"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute allowedRoles={["admin", "professor"]}>
                             <UploadPage />
                         </ProtectedRoute>
                     }
                 />
 
+                {/* Professors and TAs can view uploads and details */}
                 <Route
                     path="/uploads"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "ta"]}>
                             <UploadsPage />
                         </ProtectedRoute>
                     }
@@ -67,23 +46,22 @@ export default function App() {
                 <Route
                     path="/uploads/:id"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "ta"]}>
                             <UploadDetailsPage />
                         </ProtectedRoute>
                     }
                 />
 
+                {/* Professors and TAs can access the review queue */}
                 <Route
                     path="/review"
                     element={
-                        <ProtectedRoute>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "ta"]}>
                             <ReviewPage />
                         </ProtectedRoute>
                     }
                 />
-
             </Routes>
-
         </BrowserRouter>
-    )
+    );
 }
