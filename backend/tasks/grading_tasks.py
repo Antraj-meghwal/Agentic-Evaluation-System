@@ -111,7 +111,7 @@ def process_crop_task(
             grading_context=grading_context
         )
 
-l       logger.info(
+        logger.info(
             f"Completed processing "
             f"for crop {crop_id}"
         )
