@@ -127,14 +127,11 @@ def login_user(
             detail="Invalid credentials"
         )
 
-    # Generate JWT token
+    # Generate JWT token (id + role used by upload/grading routes)
     access_token = create_access_token({
-
-    "sub": db_user.email,
-
-    "role": db_user.role,
-
-    "user_id": db_user.id
+        "sub": db_user.email,
+        "id": db_user.id,
+        "role": db_user.role,
     })
 
     # Return token
