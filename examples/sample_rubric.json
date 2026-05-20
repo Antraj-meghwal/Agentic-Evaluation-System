@@ -1,0 +1,48 @@
+{
+  "exam_id": "midterm-2026-sample",
+  "course": "CS401",
+  "questions": [
+    {
+      "id": "q1",
+      "title": "Explain polymorphism in OOP",
+      "max_points": 10,
+      "question_type": "text",
+      "criteria": [
+        {
+          "id": "q1-c1",
+          "description": "Defines polymorphism correctly",
+          "max_points": 4,
+          "required_keywords": ["polymorphism", "inheritance"]
+        },
+        {
+          "id": "q1-c2",
+          "description": "Provides a concrete code or real-world example",
+          "max_points": 3
+        },
+        {
+          "id": "q1-c3",
+          "description": "Clear, coherent explanation",
+          "max_points": 3
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "title": "Draw and label a binary search tree",
+      "max_points": 8,
+      "question_type": "diagram",
+      "criteria": [
+        {
+          "id": "q2-c1",
+          "description": "Correct BST structure",
+          "max_points": 5
+        },
+        {
+          "id": "q2-c2",
+          "description": "Labels and notation",
+          "max_points": 3
+        }
+      ]
+    }
+  ]
+}
