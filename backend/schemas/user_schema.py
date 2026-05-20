@@ -2,7 +2,27 @@
 from pydantic import BaseModel
 from pydantic import EmailStr
 
+from pydantic import BaseModel
 
+
+class UserRegisterSchema(
+    BaseModel
+):
+
+    email: str
+
+    password: str
+
+    role: str
+
+
+class UserLoginSchema(
+    BaseModel
+):
+
+    email: str
+
+    password: str
 # -----------------------------------
 # User registration request
 # -----------------------------------

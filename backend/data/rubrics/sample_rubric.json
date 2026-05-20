@@ -1,0 +1,32 @@
+{
+  "exam_id": "CS301-Midterm-2025",
+  "questions": [
+    {
+      "q_id": "Q1",
+      "max_points": 10,
+      "content_type": "TEXT",
+      "bypass_ocr": false,
+      "criteria": [
+        {
+          "id": "c1",
+          "description": "Correct base case identified",
+          "points": 2
+        },
+        {
+          "id": "c2",
+          "description": "Inductive step is logically sound",
+          "points": 5
+        },
+        {
+          "id": "c3",
+          "description": "Notation is mathematically precise",
+          "points": 3
+        }
+      ],
+      "answer_region": {
+        "page": 1,
+        "bbox": [0.1, 0.2, 0.9, 0.5]
+      }
+    }
+  ]
+}

@@ -1,82 +1,44 @@
-# Database session
-from database import SessionLocal
-
-# FastAPI dependency tools
-from fastapi import Depends
-
-# OAuth2 token extraction
-from fastapi.security import OAuth2PasswordBearer
-
-# JWT verification
-from services.auth_service import (
-    verify_access_token
+from fastapi import (
+    Depends,
+    HTTPException
 )
 
-from fastapi import HTTPException
+from fastapi.security import (
+    OAuth2PasswordBearer
+)
 
-# -----------------------------------
-# Database dependency
-# -----------------------------------
-def get_db():
+from jose import jwt
 
-    # Create DB session
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        # Always close session
-        db.close()
+from core.security import (
+    SECRET_KEY,
+    ALGORITHM
+)
 
 
-# -----------------------------------
-# OAuth2 token extractor
-# -----------------------------------
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="login"
+    tokenUrl="/auth/login"
 )
 
 
-# -----------------------------------
-# Get current authenticated user
-# -----------------------------------
 def get_current_user(
-
-    token: str = Depends(oauth2_scheme)
+    token: str = Depends(
+        oauth2_scheme
+    )
 ):
 
-    # Verify JWT token
-    token_data = verify_access_token(token)
+    try:
 
-    return token_data
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
 
+        return payload
 
-# -----------------------------------
-# Role-based access control
-# -----------------------------------
-def require_role(allowed_roles: list):
+    except Exception:
 
-    # Dependency function
-    def role_checker(
-
-        current_user = Depends(get_current_user)
-    ):
-
-        # Extract user role
-        user_role = current_user.get("role")
-
-        # Role not allowed
-        if user_role not in allowed_roles:
-
-            raise HTTPException(
-
-                status_code=403,
-
-                detail="Access denied"
-            )
-
-        # Return authenticated user
-        return current_user
-
-    return role_checker
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
