@@ -21,13 +21,8 @@ Base.metadata.create_all(bind=engine)
 # Import routes
 from routes.upload_routes import router as upload_router
 
-from routes.grading_routes import (
-    router as grading_router
-)
-
-from routes.user_routes import (
-    router as user_router
-)
+from routes.grading_routes import router as grading_router
+from routes.user_routes import router as user_router
 
 # Import new API routes
 from api.routes.auth_routes import (
