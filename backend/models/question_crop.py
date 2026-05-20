@@ -16,6 +16,7 @@ class CropStatus(str, Enum):
     REVIEW_PENDING = "REVIEW_PENDING"
     APPROVED = "APPROVED"
     FAILED = "FAILED"
+    RETRYING = "RETRYING"
 
 
 class QuestionCrop(Base):

@@ -57,5 +57,7 @@ class Submission(Base):
     )
 
     question_crops: Mapped[List["QuestionCrop"]] = relationship(
+        "QuestionCrop",
+        back_populates="submission",
         cascade="all, delete-orphan"
     )

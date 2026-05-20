@@ -25,11 +25,23 @@ from routes.grading_routes import (
     router as grading_router
 )
 
+from api.routes.grading_routes import (
+    router as grading_router
+)
+from api.routes.status_routes import (
+    router as status_router
+)
 
+from api.routes.review_routes import (
+    router as review_router
+)
 # Create app
 app = FastAPI()
-app.include_router(grading_router)
-
+app.include_router(
+    grading_router,
+    prefix="/grading",
+    tags=["grading"]
+)
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -55,7 +67,17 @@ app.mount(
 # Register upload routes
 app.include_router(upload_router)
 
+app.include_router(
+    status_router,
+    prefix="/status",
+    tags=["status"]
+)
 
+app.include_router(
+    review_router,
+    prefix="/review",
+    tags=["review"]
+)
 # Home route
 @app.get("/")
 def home():
