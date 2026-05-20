@@ -18,7 +18,10 @@ See `docs/PIPELINE_ROADMAP.md` for the step-by-step build. **Step 1 (EXTRACT)** 
 - Context assembly (transcript + image + rubric JSON)
 
 ```bash
-POST /grading/extract/{upload_id}
+POST /grading/extract/{upload_id}      # Step 1 — OCR + context
+POST /grading/run/{upload_id}          # Full Tribunal + DB persist
+GET  /grading/results/{upload_id}      # Per-question scores
+GET  /api/review/review-queue          # TA review queue
 ```
 
 Set `HF_TOKEN` in `backend/.env`, or `PIPELINE_DRY_RUN=true` for local dev without API calls.

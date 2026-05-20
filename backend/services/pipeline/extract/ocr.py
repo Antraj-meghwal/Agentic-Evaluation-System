@@ -43,6 +43,22 @@ def extract_transcript(crop: QuestionCrop) -> OcrResult:
     transcript = parsed.get("transcript") or response.get("text", "")
     confidence = float(parsed.get("confidence", 0.7))
 
+    # Nougat fallback when primary OCR confidence is low
+    if confidence < 0.5 and MODELS.ocr_fallback:
+        fallback = client.image_to_text(
+            crop.image_path,
+            OCR_PROMPT,
+            MODELS.ocr_fallback,
+        )
+        fb_parsed = fallback.get("parsed") or {}
+        fb_conf = float(fb_parsed.get("confidence", 0.0))
+        if fb_conf > confidence:
+            response = fallback
+            parsed = fb_parsed
+            transcript = parsed.get("transcript") or fallback.get("text", transcript)
+            confidence = fb_conf
+            model_id = MODELS.ocr_fallback
+
     return OcrResult(
         question_id=crop.question_id,
         transcript=transcript.strip(),
