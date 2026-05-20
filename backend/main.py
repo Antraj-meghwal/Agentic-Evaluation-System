@@ -25,23 +25,30 @@ from routes.grading_routes import (
     router as grading_router
 )
 
-from api.routes.grading_routes import (
-    router as grading_router
-)
-from api.routes.status_routes import (
-    router as status_router
+from routes.user_routes import (
+    router as user_router
 )
 
+# Import new API routes
+from api.routes.auth_routes import (
+    router as auth_api_router
+)
+from api.routes.batch_routes import (
+    router as batch_api_router
+)
 from api.routes.review_routes import (
-    router as review_router
+    router as review_api_router
 )
+
+
 # Create app
-app = FastAPI()
-app.include_router(
-    grading_router,
-    prefix="/grading",
-    tags=["grading"]
+app = FastAPI(
+    title="GradeOps API",
+    description="AI-Assisted Academic Evaluation System",
+    version="1.0.0"
 )
+
+
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -64,20 +71,33 @@ app.mount(
 )
 
 
-# Register upload routes
+# Register legacy routes
 app.include_router(upload_router)
-
+app.include_router(user_router)
 app.include_router(
-    status_router,
-    prefix="/status",
-    tags=["status"]
+    grading_router,
+    prefix="/grading",
+    tags=["grading"]
 )
 
+# Register new API routes
 app.include_router(
-    review_router,
-    prefix="/review",
+    auth_api_router,
+    prefix="/api/auth",
+    tags=["auth"]
+)
+app.include_router(
+    batch_api_router,
+    prefix="/api/batches",
+    tags=["batches"]
+)
+app.include_router(
+    review_api_router,
+    prefix="/api/review",
     tags=["review"]
 )
+
+
 # Home route
 @app.get("/")
 def home():
@@ -86,18 +106,6 @@ def home():
 
         "message": "GradeOps Backend Running"
     }
-
-
-
-#import
-from routes.user_routes import (
-    router as user_router
-)
-app.include_router(user_router)
-
-
-
-
 
 
 @app.get("/test-db")

@@ -29,13 +29,13 @@ class HuggingFaceVLMGrader(
         )
 
     def grade(
-    self,
-    grading_context: dict
-) -> dict:
+        self,
+        grading_context: dict
+    ) -> dict:
 
-    rubric = grading_context["rubric"]
+        rubric = grading_context["rubric"]
 
-    prompt = f"""
+        prompt = f"""
 You are an expert university examiner.
 
 Grade the student's answer STRICTLY
@@ -73,51 +73,51 @@ Required JSON format:
 }}
 """
 
-    image_path = (
-        grading_context["crop_image_path"]
-    )
-
-    completion = (
-        self.client.chat.completions.create(
-            model=self.model,
-
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": (
-                                    "data:image/png;base64,"
-                                    f"{encode_image(image_path)}"
-                                )
-                            }
-                        }
-                    ]
-                }
-            ],
-
-            max_tokens=800
+        image_path = (
+            grading_context["crop_image_path"]
         )
-    )
 
-    raw_output = (
-        completion
-        .choices[0]
-        .message
-        .content
-    )
+        completion = (
+            self.client.chat.completions.create(
+                model=self.model,
 
-    cleaned_output = (
-        raw_output
-        .replace("```json", "")
-        .replace("```", "")
-        .strip()
-    )
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": (
+                                        "data:image/png;base64,"
+                                        f"{encode_image(image_path)}"
+                                    )
+                                }
+                            }
+                        ]
+                    }
+                ],
 
-    return json.loads(cleaned_output)
+                max_tokens=800
+            )
+        )
+
+        raw_output = (
+            completion
+            .choices[0]
+            .message
+            .content
+        )
+
+        cleaned_output = (
+            raw_output
+            .replace("```json", "")
+            .replace("```", "")
+            .strip()
+        )
+
+        return json.loads(cleaned_output)
