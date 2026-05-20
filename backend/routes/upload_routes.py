@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 # -----------------------------------
 # Dependencies
 # -----------------------------------
+from core.constants import GRADING_ROLES
 from dependencies import (
     get_db,
     get_current_user,
@@ -88,9 +89,7 @@ def upload_file(
 
     db: Session = Depends(get_db),
 
-    current_user = Depends(
-        require_role(["instructor"])
-    )
+    current_user=Depends(require_role(GRADING_ROLES)),
 ):
 
     # -----------------------------------

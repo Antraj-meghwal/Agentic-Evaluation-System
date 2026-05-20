@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from db.session import SessionLocal
 
@@ -13,9 +13,7 @@ from models.review_action import (
     ReviewAction,
     ReviewActionType
 )
-from dependencies import (
-    get_current_user
-)
+from dependencies import get_current_user
 
 router = APIRouter()
 
@@ -24,7 +22,8 @@ router = APIRouter()
 )
 def override_grade(
     grading_result_id: str,
-    review_data: ReviewDecisionSchema
+    review_data: ReviewDecisionSchema,
+    _user=Depends(get_current_user),
 ):
 
     db = SessionLocal()
@@ -95,7 +94,7 @@ def override_grade(
 @router.get(
     "/review-queue"
 )
-def get_review_queue():
+def get_review_queue(_user=Depends(get_current_user)):
 
     db = SessionLocal()
 

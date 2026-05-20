@@ -15,6 +15,10 @@ export default function DashboardPage() {
         return <TADashboard />;
     }
 
-    // Default or "professor" / "admin"
-    return <AdminDashboard />;
+    // professor, instructor, or admin
+    if (role === "professor" || role === "instructor" || role === "admin") {
+        return <AdminDashboard />;
+    }
+
+    return <StudentDashboard />;
 }

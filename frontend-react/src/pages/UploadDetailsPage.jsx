@@ -71,7 +71,7 @@ export default function UploadDetailsPage() {
 
             const response =
                 await API.post(
-                    `/grade/${id}`
+                    `/grading/grade/${id}`
                 )
 
             setGradingResult(

@@ -11,12 +11,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 from database import Base
 
-# Import models
-from models.user_model import User
-from models.upload_model import UploadedFile
+# Import models (legacy + tribunal schemas use separate declarative bases)
+from models.user_model import User  # noqa: F401
+from models.upload_model import UploadedFile  # noqa: F401
+import models  # noqa: F401 — batch, submission, question_crop, grading_result, review_action
 
-# Create database tables
+from db.base import Base as TribunalBase
+
+# Create database tables for both metadata registries on the same engine
 Base.metadata.create_all(bind=engine)
+TribunalBase.metadata.create_all(bind=engine)
 
 # Import routes
 from routes.upload_routes import router as upload_router

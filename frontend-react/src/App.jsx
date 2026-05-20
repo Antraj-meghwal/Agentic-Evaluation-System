@@ -27,7 +27,7 @@ export default function App() {
                 <Route
                     path="/upload"
                     element={
-                        <ProtectedRoute allowedRoles={["admin", "professor"]}>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "instructor"]}>
                             <UploadPage />
                         </ProtectedRoute>
                     }
@@ -37,7 +37,7 @@ export default function App() {
                 <Route
                     path="/uploads"
                     element={
-                        <ProtectedRoute allowedRoles={["admin", "professor", "ta"]}>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "instructor", "ta"]}>
                             <UploadsPage />
                         </ProtectedRoute>
                     }
@@ -46,7 +46,7 @@ export default function App() {
                 <Route
                     path="/uploads/:id"
                     element={
-                        <ProtectedRoute allowedRoles={["admin", "professor", "ta"]}>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "instructor", "ta"]}>
                             <UploadDetailsPage />
                         </ProtectedRoute>
                     }
@@ -56,7 +56,7 @@ export default function App() {
                 <Route
                     path="/review"
                     element={
-                        <ProtectedRoute allowedRoles={["admin", "professor", "ta"]}>
+                        <ProtectedRoute allowedRoles={["admin", "professor", "instructor", "ta"]}>
                             <ReviewPage />
                         </ProtectedRoute>
                     }

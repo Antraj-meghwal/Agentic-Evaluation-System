@@ -23,7 +23,9 @@ export function AuthProvider({ children }) {
 
     function login(jwtToken) {
         const decoded = decodeJwt(jwtToken);
-        const userRole = decoded?.role || "student"; // Fallback to least privileged
+        // Backend may use "instructor"; UI routes use "professor"
+        const rawRole = decoded?.role || "student";
+        const userRole = rawRole === "instructor" ? "professor" : rawRole;
         
         localStorage.setItem("token", jwtToken);
         localStorage.setItem("role", userRole);
@@ -46,8 +48,10 @@ export function AuthProvider({ children }) {
             setIsAuthenticated(true);
             const decoded = decodeJwt(storedToken);
             if (decoded && decoded.role) {
-                setRole(decoded.role);
-                localStorage.setItem("role", decoded.role);
+                const normalized =
+                    decoded.role === "instructor" ? "professor" : decoded.role;
+                setRole(normalized);
+                localStorage.setItem("role", normalized);
             }
         }
     }, []);

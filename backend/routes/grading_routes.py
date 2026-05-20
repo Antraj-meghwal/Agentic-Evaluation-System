@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from core.constants import GRADING_ROLES, REVIEW_ROLES
 from dependencies import get_db, require_role
 from models.upload_model import UploadedFile
 from services.pipeline import run_extract_phase
@@ -15,14 +16,16 @@ from services.vision_grading_service import grade_answer_sheet
 
 router = APIRouter(tags=["grading"])
 
-DEFAULT_RUBRIC = Path(__file__).resolve().parents[2] / "examples" / "sample_rubric.json"
+_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_RUBRIC = _ROOT / "examples" / "sample_rubric.json"
+_FALLBACK_RUBRIC = Path(__file__).resolve().parents[1] / "data" / "rubrics" / "sample_rubric.json"
 
 
 @router.post("/extract/{upload_id}")
 def pipeline_extract(
     upload_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["instructor", "ta"])),
+    current_user=Depends(require_role(REVIEW_ROLES)),
 ):
     """
     Step 1 — EXTRACT phase only.
@@ -33,7 +36,8 @@ def pipeline_extract(
         raise HTTPException(status_code=404, detail="Upload not found")
 
     file_path = upload.file_url.replace("http://127.0.0.1:8000/", "").lstrip("/")
-    rubric_path = str(DEFAULT_RUBRIC) if DEFAULT_RUBRIC.exists() else None
+    rubric_file = DEFAULT_RUBRIC if DEFAULT_RUBRIC.exists() else _FALLBACK_RUBRIC
+    rubric_path = str(rubric_file) if rubric_file.exists() else None
 
     try:
         result = run_extract_phase(
@@ -55,7 +59,7 @@ async def pipeline_extract_with_rubric(
     upload_id: int,
     rubric: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["instructor"])),
+    current_user=Depends(require_role(GRADING_ROLES)),
 ):
     """EXTRACT with instructor-provided rubric JSON."""
     upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
@@ -83,7 +87,7 @@ async def pipeline_extract_with_rubric(
 def grade_uploaded_answer(
     upload_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(require_role(["instructor"])),
+    current_user=Depends(require_role(GRADING_ROLES)),
 ):
     """Legacy single-model grade (Qwen-VL). Tribunal uses /pipeline/run in Step 2."""
     upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
