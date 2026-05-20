@@ -8,16 +8,22 @@ export default function AdminDashboard() {
     const navigate = useNavigate();
     const [uploadCount, setUploadCount] = useState(0);
 
+    const [pendingReviews, setPendingReviews] = useState(0);
+
     useEffect(() => {
-        async function fetchUploads() {
+        async function fetchData() {
             try {
-                const response = await API.get("/uploads");
-                setUploadCount(response.data.length);
+                const [uploadsRes, statsRes] = await Promise.all([
+                    API.get("/uploads"),
+                    API.get("/api/review/stats"),
+                ]);
+                setUploadCount(uploadsRes.data.length);
+                setPendingReviews(statsRes.data.pending_reviews);
             } catch (error) {
                 console.log(error);
             }
         }
-        fetchUploads();
+        fetchData();
     }, []);
 
     return (
@@ -46,7 +52,7 @@ export default function AdminDashboard() {
                     />
                     <StatCard
                         title="Pending Reviews"
-                        value="0"
+                        value={pendingReviews}
                         subtitle="Requires human validation"
                         onClick={() => navigate("/review")}
                     />
