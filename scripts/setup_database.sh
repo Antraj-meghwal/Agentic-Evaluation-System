@@ -111,12 +111,10 @@ SQL
 fi
 
 echo ""
-if [[ ! -d "$BACKEND/.venv" ]]; then
-  python3 -m venv "$BACKEND/.venv"
-fi
+echo "Ensuring Python venv and dependencies..."
+"$ROOT/scripts/setup_venv.sh"
 # shellcheck disable=SC1091
 source "$BACKEND/.venv/bin/activate"
-pip install -q psycopg2-binary alembic python-dotenv sqlalchemy
 
 cd "$BACKEND"
 python -c "

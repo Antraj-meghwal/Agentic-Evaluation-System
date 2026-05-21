@@ -166,7 +166,7 @@ def pipeline_run_async(
     task = process_upload_batch_task.delay(
         upload_id=upload.id,
         file_path=_upload_file_path(upload),
-        rubric_path=resolve_rubric_path(),
+        rubric_path=_rubric_path_for_upload(upload),
         owner_email=current_user.get("email") or str(current_user.get("id")),
     )
     

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import API from "../services/api";
 import StatusBadge from "../components/StatusBadge";
@@ -15,9 +15,8 @@ export default function UploadDetailsPage() {
 
     async function fetchUpload() {
         try {
-            const response = await API.get("/uploads");
-            const found = response.data.find((item) => item.id === Number(id));
-            setUpload(found);
+            const response = await API.get(`/uploads/${id}`);
+            setUpload(response.data);
         } catch {
             setError("Could not load upload.");
         } finally {
@@ -52,6 +51,29 @@ export default function UploadDetailsPage() {
         }
     }
 
+    async function runTribunalSync() {
+        setBusy("tribunal-sync");
+        setError("");
+        try {
+            let res;
+            if (rubricFile) {
+                const fd = new FormData();
+                fd.append("rubric", rubricFile);
+                res = await API.post(`/grading/run/${id}/rubric`, fd, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+            } else {
+                res = await API.post(`/grading/run/${id}`);
+            }
+            setPipelineResult(res.data);
+            await fetchUpload();
+        } catch (e) {
+            setError(e.response?.data?.detail || "Tribunal grading failed.");
+        } finally {
+            setBusy("");
+        }
+    }
+
     async function runTribunal() {
         setBusy("tribunal");
         setError("");
@@ -78,8 +100,8 @@ export default function UploadDetailsPage() {
         if (upload && upload.status === "processing") {
             interval = setInterval(async () => {
                 try {
-                    const response = await API.get("/uploads");
-                    const found = response.data.find((item) => item.id === Number(id));
+                    const response = await API.get(`/uploads/${id}`);
+                    const found = response.data;
                     setUpload(found);
 
                     if (found && found.status !== "processing") {
@@ -193,6 +215,15 @@ export default function UploadDetailsPage() {
                         </p>
                     </div>
 
+                    {upload.status === "graded" && (
+                        <Link
+                            to="/review"
+                            className="inline-flex mt-6 btn-warning btn-sm"
+                        >
+                            Open review queue →
+                        </Link>
+                    )}
+
                     <div className="mt-8 flex flex-wrap gap-3">
                         <button
                             type="button"
@@ -205,14 +236,22 @@ export default function UploadDetailsPage() {
                         <button
                             type="button"
                             disabled={!!busy || upload?.status === "processing"}
-                            onClick={runTribunal}
+                            onClick={runTribunalSync}
                             className="btn-primary"
+                        >
+                            {busy === "tribunal-sync" ? "Grading…" : "2. Run Tribunal (now)"}
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!!busy || upload?.status === "processing"}
+                            onClick={runTribunal}
+                            className="btn-secondary"
                         >
                             {upload?.status === "processing"
                                 ? "Processing…"
                                 : busy === "tribunal"
                                   ? "Queueing…"
-                                  : "2. Run Tribunal"}
+                                  : "Run in background"}
                         </button>
                         <button
                             type="button"

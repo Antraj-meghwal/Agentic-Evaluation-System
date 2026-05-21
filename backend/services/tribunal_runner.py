@@ -16,7 +16,13 @@ from pipeline.tribunal.coordinator import resolve_tribunal_decision
 from pipeline.verify.escalation_engine import should_escalate_to_human
 from services.pipeline.extract.runner import run_extract_phase
 from services.pipeline.schemas import GradingContext
-from services.plagiarism_service import detect_similar_pairs, detect_visual_plagiarism
+from models.upload_model import UploadedFile
+from services.plagiarism_service import (
+    detect_cross_upload_plagiarism,
+    detect_similar_pairs,
+    detect_visual_plagiarism,
+)
+from services.rag_helper import retrieve_similar_answers, store_graded_answer
 from services.tribunal_agents import run_critic, run_grader
 
 
@@ -34,6 +40,7 @@ def resolve_rubric_path(upload_rubric_path: str | None = None) -> str | None:
 
 def build_tribunal_context(ctx: GradingContext, upload_id: int) -> dict[str, Any]:
     q = ctx.question
+    ocr_text = ctx.ocr.transcript if ctx.ocr else ""
     rubric_q = {
         "q_id": q.id,
         "max_points": int(q.max_points),
@@ -52,11 +59,11 @@ def build_tribunal_context(ctx: GradingContext, upload_id: int) -> dict[str, Any
         "student_id": f"upload-{upload_id}",
         "question_id": q.id,
         "rubric": rubric_q,
-        "ocr_text": ctx.ocr.transcript if ctx.ocr else "",
+        "ocr_text": ocr_text,
         "crop_image_path": ctx.crop.image_path,
         "content_type": rubric_q["content_type"],
         "bypass_ocr": ctx.crop.bypass_ocr,
-        "similar_answers": [],
+        "similar_answers": retrieve_similar_answers(q.id, ocr_text),
         "upload_id": upload_id,
     }
 
@@ -128,6 +135,7 @@ def run_tribunal_for_upload(
     results: list[dict[str, Any]] = []
     transcripts: dict[str, str] = {}
     crop_paths: dict[str, str] = {}
+    upload_row = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
 
     try:
         rubric_path_str = rubric_path or resolve_rubric_path() or ""
@@ -182,9 +190,11 @@ def run_tribunal_for_upload(
             )
 
             store_graded_answer(
-                crop_id=str(crop.id),
+                crop_id=str(grading_result.question_crop_id),
                 question_id=ctx.question.id,
-                answer_text=ocr_text or grading_result.final_feedback or "",
+                answer_text=tribunal_ctx.get("ocr_text")
+                or grading_result.final_feedback
+                or "",
                 final_score=grading_result.final_score,
             )
 
@@ -202,12 +212,23 @@ def run_tribunal_for_upload(
                 }
             )
 
-        # ── Text-based plagiarism (transcript similarity) ──────────────
+        # ── Text-based plagiarism (within this exam) ─────────────────
         plagiarism_flags = detect_similar_pairs(transcripts)
 
-        # ── CLIP visual plagiarism (image crop similarity) ────────────
+        # ── CLIP visual plagiarism (within this exam) ─────────────────
         visual_flags = detect_visual_plagiarism(crop_paths)
         plagiarism_flags.extend(visual_flags)
+
+        # ── Cross-paper plagiarism (same instructor batch / rubric) ───
+        if upload_row:
+            cross_flags = detect_cross_upload_plagiarism(
+                db,
+                current_upload_id=upload_id,
+                owner_id=upload_row.owner_id,
+                rubric_path=upload_row.rubric_path,
+                current_transcripts=transcripts,
+            )
+            plagiarism_flags.extend(cross_flags)
 
         # ── Persist flags into grading results ────────────────────────
         if plagiarism_flags:
@@ -222,8 +243,10 @@ def run_tribunal_for_upload(
                     out["plagiarism_flags"] = plagiarism_flags
                     gr.coordinator_output = out
                     if any(
-                        f["question_a"] == item["question_id"]
-                        or f["question_b"] == item["question_id"]
+                        f.get("upload_a") == upload_id
+                        or f.get("upload_b") == upload_id
+                        or f.get("question_a") == item["question_id"]
+                        or f.get("question_b") == item["question_id"]
                         for f in plagiarism_flags
                     ):
                         gr.requires_human_review = True

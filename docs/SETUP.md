@@ -50,17 +50,27 @@ Same credentials everywhere: user **`gradeops`**, password **`gradeops`**, datab
 cp .env.compose.example .env.compose   # only if using Docker
 ```
 
-## 3. Backend
+## 3. Backend (venv + all requirements)
+
+From the **repo root**:
+
+```bash
+./scripts/setup_venv.sh
+```
+
+This creates `backend/.venv` and installs everything in `backend/requirements.txt` (FastAPI, Postgres, Celery, PyTorch, LangGraph, ChromaDB, etc.).
+
+Activate manually if needed:
 
 ```bash
 cd backend
-python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
 # If you skipped setup_database.sh:
 python -m alembic upgrade head
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+Or from repo root: `./scripts/run_dev.sh` (activates venv automatically).
 
 Optional — async tribunal (Celery) in a **second terminal**:
 
@@ -97,8 +107,10 @@ cd backend && python scripts/seed_demo_users.py
 1. Register at `/register` or use demo accounts above.
 2. Log in — you should receive a JWT.
 3. Upload a sample PDF + rubric from `examples/sample_rubric.json`.
-4. Run **Extract** then **Tribunal** on the upload details page.
-5. With `PIPELINE_DRY_RUN=true`, grades are mock but the full UI flow works.
+4. Run **Extract** then **Run Tribunal (now)** on the upload details page (sync; no Celery required).
+5. Optional: use **Run in background** if Celery worker is running.
+6. Log in as TA → **Review** queue → approve with **A**, override with **O** (focus field, press O again to submit).
+7. With `PIPELINE_DRY_RUN=true`, grades are mock but the full UI flow works.
 
 See [PROJECT_GOALS.md](PROJECT_GOALS.md) for brief ↔ implementation mapping.
 

@@ -18,10 +18,10 @@ To ensure fairness and reliability, AI-generated evaluations are reviewed throug
 Run **one command per line** (zsh treats `#` as a comment only at the start of a line):
 
 ```bash
-./scripts/setup_database.sh
+./scripts/setup_venv.sh          # creates backend/.venv + installs all requirements
+./scripts/setup_database.sh    # Postgres + migrations (uses venv)
 ./scripts/check-secrets.sh
 cp frontend-react/.env.example frontend-react/.env.local
-cd backend && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ./scripts/run_dev.sh
 ```
 

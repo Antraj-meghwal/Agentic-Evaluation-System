@@ -37,47 +37,24 @@ export default function ReviewPage() {
         fetchQueue();
     }, [fetchQueue]);
 
-    useEffect(() => {
-        function onKey(e) {
-            if (!selected) return;
-            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    const selectNext = useCallback(
+        (delta) => {
+            if (!queue.length || !selected) return;
+            const idx = queue.findIndex(
+                (q) => q.grading_result_id === selected.grading_result_id
+            );
+            const next = queue[idx + delta];
+            if (next) {
+                setSelected(next);
+                setOverrideScore(String(next.score));
+                setNotes("");
+            }
+        },
+        [queue, selected]
+    );
 
-            if (e.key === "a" || e.key === "A") {
-                e.preventDefault();
-                handleApprove();
-            }
-            if (e.key === "o" || e.key === "O") {
-                e.preventDefault();
-                document.getElementById("override-score")?.focus();
-            }
-            if (e.key === "j" || e.key === "J") {
-                e.preventDefault();
-                selectNext(1);
-            }
-            if (e.key === "k" || e.key === "K") {
-                e.preventDefault();
-                selectNext(-1);
-            }
-        }
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    });
-
-    function selectNext(delta) {
-        if (!queue.length || !selected) return;
-        const idx = queue.findIndex(
-            (q) => q.grading_result_id === selected.grading_result_id
-        );
-        const next = queue[idx + delta];
-        if (next) {
-            setSelected(next);
-            setOverrideScore(String(next.score));
-            setNotes("");
-        }
-    }
-
-    async function handleApprove() {
-        if (!selected) return;
+    const handleApprove = useCallback(async () => {
+        if (!selected || actionLoading) return;
         setActionLoading(true);
         setMessage("");
         try {
@@ -94,10 +71,10 @@ export default function ReviewPage() {
         } finally {
             setActionLoading(false);
         }
-    }
+    }, [selected, actionLoading, queue]);
 
-    async function handleOverride() {
-        if (!selected) return;
+    const handleOverride = useCallback(async () => {
+        if (!selected || actionLoading) return;
         setActionLoading(true);
         setMessage("");
         try {
@@ -117,7 +94,43 @@ export default function ReviewPage() {
         } finally {
             setActionLoading(false);
         }
-    }
+    }, [selected, actionLoading, queue, overrideScore, notes]);
+
+    useEffect(() => {
+        function onKey(e) {
+            if (!selected || actionLoading) return;
+
+            const tag = e.target.tagName;
+            const inField = tag === "INPUT" || tag === "TEXTAREA";
+
+            if ((e.key === "a" || e.key === "A") && !inField) {
+                e.preventDefault();
+                handleApprove();
+                return;
+            }
+            if (e.key === "o" || e.key === "O") {
+                e.preventDefault();
+                if (inField && e.target.id === "override-score") {
+                    handleOverride();
+                } else {
+                    document.getElementById("override-score")?.focus();
+                }
+                return;
+            }
+            if (inField) return;
+
+            if (e.key === "j" || e.key === "J") {
+                e.preventDefault();
+                selectNext(1);
+            }
+            if (e.key === "k" || e.key === "K") {
+                e.preventDefault();
+                selectNext(-1);
+            }
+        }
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [selected, actionLoading, handleApprove, handleOverride, selectNext]);
 
     const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
     const imageSrc = selected?.crop_image_url
@@ -242,9 +255,11 @@ export default function ReviewPage() {
                                             <ul className="list-disc ml-4 space-y-1">
                                                 {selected.plagiarism_flags.map((f, i) => (
                                                     <li key={i}>
-                                                        Q{f.question_a} ↔ Q{f.question_b} ·{" "}
-                                                        similarity {(f.similarity * 100).toFixed(0)}%
-                                                        {f.method ? ` (${f.method})` : ""}
+                                                        {f.upload_a != null
+                                                            ? `Upload #${f.upload_a} ↔ #${f.upload_b}`
+                                                            : `Q${f.question_a} ↔ Q${f.question_b}`}{" "}
+                                                        · {(f.similarity * 100).toFixed(0)}% similar
+                                                        {f.reason ? ` — ${f.reason}` : ""}
                                                     </li>
                                                 ))}
                                             </ul>

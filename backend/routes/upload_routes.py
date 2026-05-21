@@ -11,6 +11,7 @@ from core.constants import ALLOWED_EXTENSIONS, GRADING_ROLES, REVIEW_ROLES
 from dependencies import get_current_user, get_db, require_role
 from models.upload_model import UploadedFile
 from schemas.upload_schema import BulkUploadResponse, UploadResponse
+from services.pipeline.schemas import GradingRubric
 from services.storage_service import MAX_UPLOAD_BYTES, get_storage, unique_key
 
 router = APIRouter()
@@ -37,9 +38,12 @@ def _read_bounded(upload: UploadFile) -> bytes:
 def _save_rubric(rubric: UploadFile) -> str:
     data = _read_bounded(rubric)
     try:
-        json.loads(data)
+        rubric_data = json.loads(data)
+        GradingRubric.model_validate(rubric_data)
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail="Invalid rubric JSON") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid rubric schema: {exc}") from exc
 
     storage = get_storage()
     key = unique_key(rubric.filename or "rubric.json", prefix="rubrics")
@@ -122,6 +126,22 @@ async def upload_bulk(
         created.append(UploadResponse.model_validate(row))
 
     return BulkUploadResponse(uploaded=len(created), items=created)
+
+
+@router.get("/uploads/{upload_id}", response_model=UploadResponse)
+def get_upload(
+    upload_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    role = (current_user.get("role") or "").lower()
+    if role not in {r.lower() for r in REVIEW_ROLES}:
+        if upload.owner_id != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Not allowed")
+    return upload
 
 
 @router.get("/uploads", response_model=list[UploadResponse])

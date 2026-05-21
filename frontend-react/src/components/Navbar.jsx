@@ -1,13 +1,23 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { logout, role } = useAuth();
+
+    const isStaff = ["ta", "professor", "instructor", "admin"].includes(role);
+    const canUpload = ["professor", "instructor", "admin"].includes(role);
+    const canReview = isStaff;
 
     function handleLogout() {
         logout();
         navigate("/");
+    }
+
+    function navClass(path) {
+        const active = location.pathname === path || location.pathname.startsWith(path + "/");
+        return active ? "nav-link nav-link-active" : "nav-link";
     }
 
     return (
@@ -24,24 +34,29 @@ export default function Navbar() {
                 <h1 className="text-xl font-extrabold heading-gradient tracking-tight">GRADEOPS</h1>
             </div>
 
-            <div className="flex items-center gap-2 md:gap-4">
-                {["ta", "professor", "instructor", "admin"].includes(role) && (
-                    <button type="button" onClick={() => navigate("/review")} className="nav-link">
-                        Review queue
+            <div className="flex items-center gap-1 md:gap-2">
+                {isStaff && (
+                    <button type="button" onClick={() => navigate("/uploads")} className={navClass("/uploads")}>
+                        Uploads
                     </button>
                 )}
-                {["professor", "instructor", "admin"].includes(role) && (
-                    <button type="button" onClick={() => navigate("/upload")} className="nav-link">
-                        Upload
+                {canReview && (
+                    <button type="button" onClick={() => navigate("/review")} className={navClass("/review")}>
+                        Review
                     </button>
                 )}
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+                {canUpload && (
+                    <button type="button" onClick={() => navigate("/upload")} className={navClass("/upload")}>
+                        New Upload
+                    </button>
+                )}
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 ml-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs font-semibold text-emerald-700 capitalize">
-                        {role || "Admin"} Portal
+                        {role || "User"} Portal
                     </span>
                 </div>
-                <div className="h-6 w-px bg-slate-200 hidden md:block" />
+                <div className="h-6 w-px bg-slate-200 hidden md:block mx-1" />
                 <button onClick={handleLogout} className="btn-danger-ghost btn-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
