@@ -25,7 +25,7 @@ Architecture reference: `gradeops_tribunal_architecture.svg`
 - [x] Plagiarism: transcript similarity within upload (`services/plagiarism_service.py`)
 - [x] CLIP visual plagiarism (`detect_visual_plagiarism` in tribunal runner)
 - [x] Persist grades to PostgreSQL (`grading_results`, `question_crops`)
-- [x] Celery async batch queue wired from upload UI (`POST /grading/run-async/{id}`)
+- [x] Celery async batch queue wired from upload UI (`POST /grading/run-async/{id}`) via `tasks/batch_tasks.py`
 
 ## Step 4 — DELIVER (done)
 

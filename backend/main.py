@@ -22,9 +22,7 @@ from db.base import Base as TribunalBase
 Base.metadata.create_all(bind=engine)
 TribunalBase.metadata.create_all(bind=engine)
 
-# Import routes
 from routes.upload_routes import router as upload_router
-
 from routes.grading_routes import router as grading_router
 from routes.user_routes import router as user_router
 
@@ -52,37 +50,26 @@ from api.routes.status_routes import (
 )
 
 
-# Create app
 app = FastAPI(
     title="GradeOps API",
     description="AI-Assisted Academic Evaluation System",
-    version="1.0.0"
+    version="1.0.0",
 )
 
-
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-
     allow_origins=["*"],
-
     allow_credentials=True,
-
     allow_methods=["*"],
-
     allow_headers=["*"],
 )
 
-
-# Serve uploads folder
 app.mount(
     "/uploads",
     StaticFiles(directory="uploads"),
-    name="uploads"
+    name="uploads",
 )
 
-
-# Register legacy routes
 app.include_router(upload_router)
 app.include_router(user_router)
 app.include_router(
@@ -129,7 +116,6 @@ app.include_router(
 )
 
 
-# Home route
 @app.get("/")
 def home():
 
