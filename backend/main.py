@@ -38,6 +38,9 @@ from api.routes.batch_routes import (
 from api.routes.review_routes import (
     router as review_api_router
 )
+from api.routes.export_routes import (
+    router as export_api_router
+)
 
 
 # Create app
@@ -94,6 +97,11 @@ app.include_router(
     review_api_router,
     prefix="/api/review",
     tags=["review"]
+)
+app.include_router(
+    export_api_router,
+    prefix="/api/export",
+    tags=["export"]
 )
 
 
