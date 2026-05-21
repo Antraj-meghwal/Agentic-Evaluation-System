@@ -15,14 +15,10 @@ from models.upload_model import UploadedFile
 from services.pipeline import run_extract_phase
 from services.pipeline.schemas import GradingRubric
 from services.tribunal_runner import resolve_rubric_path, run_tribunal_for_upload
-from services.vision.vision_router import prepare_document_for_grading
-from services.vision_grading_service import grade_answer_sheet
-
 router = APIRouter(tags=["grading"])
 
 _ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RUBRIC = _ROOT / "examples" / "sample_rubric.json"
-_FALLBACK_RUBRIC = Path(__file__).resolve().parents[1] / "data" / "rubrics" / "sample_rubric.json"
 
 
 def _upload_file_path(upload: UploadedFile) -> str:
@@ -30,8 +26,7 @@ def _upload_file_path(upload: UploadedFile) -> str:
 
 
 def _default_rubric_path() -> str | None:
-    rubric_file = DEFAULT_RUBRIC if DEFAULT_RUBRIC.exists() else _FALLBACK_RUBRIC
-    return str(rubric_file) if rubric_file.exists() else None
+    return str(DEFAULT_RUBRIC) if DEFAULT_RUBRIC.exists() else None
 
 
 @router.post("/extract/{upload_id}")
@@ -257,36 +252,3 @@ def get_grading_results(
         return {"upload_id": upload_id, "results": items}
     finally:
         db.close()
-
-
-@router.post("/grade/{upload_id}")
-def grade_uploaded_answer(
-    upload_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(require_role(GRADING_ROLES)),
-):
-    """Legacy single-model grade (Qwen-VL). Prefer POST /grading/run/{id}."""
-    upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
-    if not upload:
-        raise HTTPException(status_code=404, detail="Upload not found")
-
-    processed_images = prepare_document_for_grading(
-        upload.file_url.replace("http://127.0.0.1:8000/", ""),
-        upload_id=upload.id,
-    )
-
-    rubric = """
-    Award marks for:
-    - correctness
-    - explanation
-    - examples
-    - clarity
-    """
-
-    grading_result = grade_answer_sheet(processed_images[0], rubric)
-
-    return {
-        "upload_id": upload.id,
-        "grading_result": grading_result,
-        "note": "Use POST /grading/run/{id} for full Tribunal pipeline.",
-    }

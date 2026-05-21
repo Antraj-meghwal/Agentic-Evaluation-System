@@ -6,7 +6,7 @@ from core.security import (
     create_access_token
 )
 
-from models.user import User
+from models.user_model import User
 
 
 def register_user(
