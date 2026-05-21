@@ -1,22 +1,19 @@
-# Local dependencies for GradeOps — no secrets in this file.
-# Start: docker compose up -d
-# Stop:  docker compose down
+# Local Postgres + Redis. Credentials from .env.compose (never commit .env.compose).
+#   cp .env.compose.example .env.compose
+#   docker compose up -d
 
 services:
   postgres:
     image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: gradeops
-      POSTGRES_PASSWORD: gradeops
-      POSTGRES_DB: gradeops
+    env_file:
+      - .env.compose
     ports:
-      # Host 5433 avoids conflict with Homebrew Postgres on 5432
       - "5433:5432"
     volumes:
       - gradeops_pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gradeops -d gradeops"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5

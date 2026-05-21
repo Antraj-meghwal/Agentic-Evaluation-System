@@ -10,7 +10,15 @@ __pycache__/
 venv/
 .env
 .env.*
+.env.compose
 !.env.example
+!.env.compose.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend-react/.env
+frontend-react/.env.*
+!frontend-react/.env.example
 
 # Secrets & keys
 *.pem

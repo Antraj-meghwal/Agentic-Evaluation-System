@@ -7,7 +7,6 @@ from alembic import context
 
 from core.db_url import BACKEND_DIR, get_database_url
 from database import Base as LegacyBase
-from db.base import Base as TribunalBase
 from models import *  # noqa: F401, F403
 from models.user_model import User  # noqa: F401
 from models.upload_model import UploadedFile  # noqa: F401
@@ -20,8 +19,8 @@ if config.config_file_name is not None:
 database_url = get_database_url()
 config.set_main_option("sqlalchemy.url", database_url)
 
-# All tables: legacy (users, uploads) + tribunal (batches, crops, grades, …)
-target_metadata = [LegacyBase.metadata, TribunalBase.metadata]
+# Legacy metadata only for autogenerate; migrations use explicit op.* calls
+target_metadata = LegacyBase.metadata
 
 
 def run_migrations_offline() -> None:

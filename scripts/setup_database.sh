@@ -36,14 +36,30 @@ write_env() {
   echo "DATABASE_URL → postgresql://${DB_USER}:***@${DB_HOST}:${port}/${DB_NAME}"
 }
 
+COMPOSE_ENV="$ROOT/.env.compose"
+COMPOSE_EXAMPLE="$ROOT/.env.compose.example"
+if [[ ! -f "$COMPOSE_ENV" ]] && [[ -f "$COMPOSE_EXAMPLE" ]]; then
+  cp "$COMPOSE_EXAMPLE" "$COMPOSE_ENV"
+  echo "Created .env.compose from .env.compose.example"
+fi
+
 echo "== GradeOps database setup =="
 
-if command -v docker >/dev/null 2>&1; then
+USE_DOCKER=false
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  USE_DOCKER=true
+fi
+
+if [[ "$USE_DOCKER" == true ]]; then
   DB_PORT=5433
   echo "Using Docker Postgres on host port ${DB_PORT} (avoids Homebrew Postgres on 5432)."
   write_env "$DB_PORT"
 
   cd "$ROOT"
+  if [[ ! -f "$COMPOSE_ENV" ]]; then
+    echo "ERROR: Missing .env.compose — run: cp .env.compose.example .env.compose"
+    exit 1
+  fi
   docker compose down -v 2>/dev/null || true
   docker compose up -d postgres redis
   echo "Waiting for Postgres..."
@@ -57,7 +73,12 @@ if command -v docker >/dev/null 2>&1; then
   done
 else
   DB_PORT=5432
-  echo "Docker not found — using local Postgres on port ${DB_PORT}."
+  if command -v docker >/dev/null 2>&1; then
+    echo "Docker installed but daemon not running — using local Postgres on port ${DB_PORT}."
+    echo "  (Start Docker Desktop, then re-run this script for port 5433.)"
+  else
+    echo "Using local Homebrew Postgres on port ${DB_PORT}."
+  fi
   write_env "$DB_PORT"
 
   if ! command -v psql >/dev/null 2>&1; then
