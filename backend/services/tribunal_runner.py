@@ -15,7 +15,7 @@ from pipeline.tribunal.coordinator import resolve_tribunal_decision
 from pipeline.verify.escalation_engine import should_escalate_to_human
 from services.pipeline.extract.runner import run_extract_phase
 from services.pipeline.schemas import GradingContext
-from services.plagiarism_service import detect_similar_pairs
+from services.plagiarism_service import detect_similar_pairs, detect_visual_plagiarism
 from services.tribunal_agents import run_critic, run_grader
 
 
@@ -131,6 +131,7 @@ def run_tribunal_for_upload(
     db = SessionLocal()
     results: list[dict[str, Any]] = []
     transcripts: dict[str, str] = {}
+    crop_paths: dict[str, str] = {}
 
     try:
         rubric_path_str = rubric_path or resolve_rubric_path() or ""
@@ -158,6 +159,7 @@ def run_tribunal_for_upload(
         for ctx in extract.contexts:
             tribunal_ctx = build_tribunal_context(ctx, upload_id)
             transcripts[ctx.question.id] = tribunal_ctx.get("ocr_text", "")
+            crop_paths[ctx.question.id] = ctx.crop.image_path
 
             # Execute LangGraph
             initial_state = {"tribunal_ctx": tribunal_ctx}
@@ -197,7 +199,14 @@ def run_tribunal_for_upload(
                 }
             )
 
+        # ── Text-based plagiarism (transcript similarity) ──────────────
         plagiarism_flags = detect_similar_pairs(transcripts)
+
+        # ── CLIP visual plagiarism (image crop similarity) ────────────
+        visual_flags = detect_visual_plagiarism(crop_paths)
+        plagiarism_flags.extend(visual_flags)
+
+        # ── Persist flags into grading results ────────────────────────
         if plagiarism_flags:
             for item in results:
                 gr = (
