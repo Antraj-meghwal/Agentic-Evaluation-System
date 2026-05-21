@@ -16,6 +16,11 @@ load_dotenv()
 
 # Get database URL from .env
 DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL is not set. Copy backend/.env.example to backend/.env "
+        "and configure PostgreSQL (see docs/SETUP.md)."
+    )
 
 
 # Create PostgreSQL engine

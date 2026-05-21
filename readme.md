@@ -1,5 +1,5 @@
 
-# Agentic Evaluation System
+# Agentic Evaluation System (GradeOps)
 
 ## Human-in-the-Loop AI Grading Platform
 
@@ -8,6 +8,21 @@ Agentic Evaluation System is an AI-powered Human-in-the-Loop (HITL) grading plat
 The platform enables instructors to upload bulk scanned exam papers and structured JSON rubrics, allowing the system to automatically extract handwritten responses, interpret complex answers, award partial credit, and generate transparent grading justifications.
 
 To ensure fairness and reliability, AI-generated evaluations are reviewed through a high-speed Teaching Assistant dashboard where grades can be approved, modified, or overridden.
+
+## Quick start (for reviewers)
+
+**Full instructions:** [docs/SETUP.md](docs/SETUP.md)  
+**Before pushing to GitHub:** [docs/SECURITY.md](docs/SECURITY.md) and `./scripts/check-secrets.sh`
+
+```bash
+docker compose up -d
+cp backend/.env.example backend/.env    # set SECRET_KEY; PIPELINE_DRY_RUN=true for first run
+cp frontend-react/.env.example frontend-react/.env.local
+cd backend && python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && alembic upgrade head && uvicorn main:app --reload
+# new terminal:
+cd frontend-react && npm install && npm run dev
+```
 
 ## Multi-model pipeline (Hugging Face)
 

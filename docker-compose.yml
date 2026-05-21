@@ -1,0 +1,33 @@
+# Local dependencies for GradeOps — no secrets in this file.
+# Start: docker compose up -d
+# Stop:  docker compose down
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gradeops
+      POSTGRES_PASSWORD: gradeops
+      POSTGRES_DB: gradeops
+    ports:
+      - "5432:5432"
+    volumes:
+      - gradeops_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gradeops -d gradeops"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  gradeops_pgdata:
