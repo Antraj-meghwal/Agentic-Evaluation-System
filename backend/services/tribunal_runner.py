@@ -153,16 +153,21 @@ def run_tribunal_for_upload(
         db.add(submission)
         db.flush()
 
+        from pipeline.tribunal.graph import app as tribunal_graph
+        
         for ctx in extract.contexts:
             tribunal_ctx = build_tribunal_context(ctx, upload_id)
             transcripts[ctx.question.id] = tribunal_ctx.get("ocr_text", "")
 
-            grader_output = run_grader(tribunal_ctx)
-            critic_output = run_critic(tribunal_ctx, grader_output)
-            resolution = resolve_tribunal_decision(grader_output, critic_output)
-            escalate, escalation_reasons = should_escalate_to_human(
-                tribunal_ctx, grader_output, critic_output
-            )
+            # Execute LangGraph
+            initial_state = {"tribunal_ctx": tribunal_ctx}
+            final_state = tribunal_graph.invoke(initial_state)
+
+            grader_output = final_state.get("grader_output", {})
+            critic_output = final_state.get("critic_output", {})
+            resolution = final_state.get("resolution", {})
+            escalate = final_state.get("escalate", False)
+            escalation_reasons = final_state.get("escalation_reasons", [])
 
             grading_result = persist_tribunal_result(
                 db,
