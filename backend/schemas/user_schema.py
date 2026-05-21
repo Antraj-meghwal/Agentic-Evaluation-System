@@ -1,10 +1,15 @@
-from pydantic import BaseModel, EmailStr
+from typing import Literal
+
+from pydantic import BaseModel, EmailStr, Field
+
+
+RegisterRole = Literal["instructor", "professor", "ta"]
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
-    role: str
+    password: str = Field(min_length=6)
+    role: RegisterRole
 
 
 class UserResponse(BaseModel):

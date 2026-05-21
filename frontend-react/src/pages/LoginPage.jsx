@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -90,6 +90,13 @@ export default function LoginPage() {
                         ) : "Secure Sign In"}
                     </button>
                 </form>
+
+                <p className="text-center text-slate-500 text-sm mt-6">
+                    New user?{" "}
+                    <Link to="/register" className="text-indigo-400 hover:underline">
+                        Register as Instructor or TA
+                    </Link>
+                </p>
             </div>
         </div>
     );

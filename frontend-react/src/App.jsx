@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import UploadPage from "./pages/UploadPage";
 import UploadsPage from "./pages/UploadsPage";
@@ -12,6 +13,7 @@ export default function App() {
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
                 {/* Dashboard routes intelligently based on role */}
                 <Route

@@ -118,8 +118,9 @@ export default function ReviewPage() {
         }
     }
 
+    const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
     const imageSrc = selected?.crop_image_url
-        ? `http://127.0.0.1:8000${selected.crop_image_url}`
+        ? `${apiBase}${selected.crop_image_url}`
         : null;
 
     return (
@@ -227,6 +228,21 @@ export default function ReviewPage() {
                                     {selected.escalation_reasons?.length > 0 && (
                                         <div className="text-amber-400 text-xs">
                                             Escalation: {selected.escalation_reasons.join("; ")}
+                                        </div>
+                                    )}
+
+                                    {selected.plagiarism_flags?.length > 0 && (
+                                        <div className="bg-red-500/10 border border-red-500/40 rounded-xl p-3 text-xs text-red-300">
+                                            <p className="font-semibold mb-1">Plagiarism flags</p>
+                                            <ul className="list-disc ml-4 space-y-1">
+                                                {selected.plagiarism_flags.map((f, i) => (
+                                                    <li key={i}>
+                                                        Q{f.question_a} ↔ Q{f.question_b} ·{" "}
+                                                        similarity {(f.similarity * 100).toFixed(0)}%
+                                                        {f.method ? ` (${f.method})` : ""}
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
                                     )}
 

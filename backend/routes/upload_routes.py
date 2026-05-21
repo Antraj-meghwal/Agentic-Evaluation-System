@@ -1,220 +1,136 @@
-# -----------------------------------
-# Python utilities
-# -----------------------------------
+"""Upload endpoints — single file, bulk PDFs, optional rubric JSON."""
+
+import json
 import os
-import shutil
+from typing import Annotated
 
-from datetime import datetime
-
-
-# -----------------------------------
-# FastAPI tools
-# -----------------------------------
-from fastapi import APIRouter
-from fastapi import UploadFile
-from fastapi import File
-from fastapi import Depends
-from fastapi import HTTPException
-
-
-# -----------------------------------
-# SQLAlchemy session
-# -----------------------------------
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-
-# -----------------------------------
-# Dependencies
-# -----------------------------------
-from core.constants import GRADING_ROLES
-from dependencies import (
-    get_db,
-    get_current_user,
-    require_role
-)
-
-
-# -----------------------------------
-# Database model
-# -----------------------------------
+from core.constants import ALLOWED_EXTENSIONS, GRADING_ROLES, REVIEW_ROLES
+from dependencies import get_current_user, get_db, require_role
 from models.upload_model import UploadedFile
+from schemas.upload_schema import BulkUploadResponse, UploadResponse
+from services.storage_service import MAX_UPLOAD_BYTES, get_storage, unique_key
 
-
-# -----------------------------------
-# Response schemas
-# -----------------------------------
-from schemas.upload_schema import (
-    UploadResponse
-)
-
-
-# -----------------------------------
-# Allowed file types
-# -----------------------------------
-ALLOWED_EXTENSIONS = {
-
-    ".pdf",
-
-    ".png",
-
-    ".jpg",
-
-    ".jpeg"
-}
-
-
-# -----------------------------------
-# Maximum file size
-# 5 MB
-# -----------------------------------
-MAX_FILE_SIZE = 5 * 1024 * 1024
-
-
-# -----------------------------------
-# Create router
-# -----------------------------------
 router = APIRouter()
 
 
-# -----------------------------------
-# Upload file endpoint
-# -----------------------------------
-@router.post(
-    "/upload",
-    response_model=UploadResponse
-)
+def _validate_extension(filename: str) -> str:
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    return ext
+
+
+def _read_bounded(upload: UploadFile) -> bytes:
+    data = upload.file.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large (max {MAX_UPLOAD_BYTES // (1024 * 1024)} MB)",
+        )
+    upload.file.seek(0)
+    return data
+
+
+def _save_rubric(rubric: UploadFile) -> str:
+    data = _read_bounded(rubric)
+    try:
+        json.loads(data)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Invalid rubric JSON") from exc
+
+    storage = get_storage()
+    key = unique_key(rubric.filename or "rubric.json", prefix="rubrics")
+    storage.save_bytes(key, data, content_type="application/json")
+    return key
+
+
+def _persist_upload(
+    db: Session,
+    *,
+    filename: str,
+    file_url: str,
+    owner_id: int,
+    rubric_path: str | None = None,
+) -> UploadedFile:
+    row = UploadedFile(
+        filename=filename,
+        file_url=file_url,
+        owner_id=owner_id,
+        rubric_path=rubric_path,
+        status="uploaded",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.post("/upload", response_model=UploadResponse)
 def upload_file(
-
     file: UploadFile = File(...),
-
+    rubric: UploadFile | None = File(None),
     db: Session = Depends(get_db),
-
     current_user=Depends(require_role(GRADING_ROLES)),
 ):
+    _validate_extension(file.filename or "")
+    data = _read_bounded(file)
+    storage = get_storage()
+    key = unique_key(file.filename or "exam.pdf")
+    file_url = storage.save_bytes(key, data, content_type=file.content_type)
 
-    # -----------------------------------
-    # Validate file extension
-    # -----------------------------------
-    file_extension = os.path.splitext(
-        file.filename
-    )[1].lower()
-
-    # Invalid extension
-    if file_extension not in ALLOWED_EXTENSIONS:
-
-        raise HTTPException(
-
-            status_code=400,
-
-            detail="Unsupported file type"
-        )
-
-    # -----------------------------------
-    # Validate file size
-    # -----------------------------------
-    contents = file.file.read()
-
-    # File too large
-    if len(contents) > MAX_FILE_SIZE:
-
-        raise HTTPException(
-
-            status_code=400,
-
-            detail="File too large"
-        )
-
-    # Reset file pointer
-    file.file.seek(0)
-
-    # -----------------------------------
-    # Generate unique filename
-    # -----------------------------------
-    timestamp = datetime.utcnow().strftime(
-        "%Y%m%d%H%M%S"
-    )
-
-    unique_filename = (
-        f"{timestamp}_{file.filename}"
-    )
-
-    # -----------------------------------
-    # File storage path
-    # -----------------------------------
-    file_location = (
-        f"uploads/{unique_filename}"
-    )
-
-    # -----------------------------------
-    # Save file to disk
-    # -----------------------------------
-    with open(file_location, "wb") as buffer:
-
-        shutil.copyfileobj(
-            file.file,
-            buffer
-        )
-
-    # -----------------------------------
-    # Public file URL
-    # -----------------------------------
-    file_url = (
-        f"http://127.0.0.1:8000/uploads/{unique_filename}"
-    )
-
-    # -----------------------------------
-    # Create DB object
-    # -----------------------------------
-    uploaded_file = UploadedFile(
-
-        filename=unique_filename,
-
+    rubric_path = _save_rubric(rubric) if rubric else None
+    return _persist_upload(
+        db,
+        filename=key,
         file_url=file_url,
-
-        owner_id=current_user["id"]
+        owner_id=current_user["id"],
+        rubric_path=rubric_path,
     )
 
-    # -----------------------------------
-    # Save to database
-    # -----------------------------------
-    db.add(uploaded_file)
 
-    db.commit()
-
-    db.refresh(uploaded_file)
-
-    # -----------------------------------
-    # Return response
-    # -----------------------------------
-    return uploaded_file
-
-
-# -----------------------------------
-# Get uploads belonging
-# to authenticated user
-# -----------------------------------
-@router.get(
-    "/uploads",
-    response_model=list[UploadResponse]
-)
-def get_uploads(
-
+@router.post("/upload/bulk", response_model=BulkUploadResponse)
+async def upload_bulk(
+    files: Annotated[list[UploadFile], File(...)],
+    rubric: UploadFile | None = File(None),
     db: Session = Depends(get_db),
-
-    current_user = Depends(get_current_user)
+    current_user=Depends(require_role(GRADING_ROLES)),
 ):
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one file is required")
+    if len(files) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 files per bulk upload")
 
-    # Fetch uploads for current user
-    uploads = (
+    rubric_path = _save_rubric(rubric) if rubric else None
+    storage = get_storage()
+    created: list[UploadResponse] = []
 
-        db.query(UploadedFile)
-
-        .filter(
-            UploadedFile.owner_id
-            == current_user["id"]
+    for upload in files:
+        _validate_extension(upload.filename or "")
+        data = _read_bounded(upload)
+        key = unique_key(upload.filename or "exam.pdf")
+        file_url = storage.save_bytes(key, data, content_type=upload.content_type)
+        row = _persist_upload(
+            db,
+            filename=key,
+            file_url=file_url,
+            owner_id=current_user["id"],
+            rubric_path=rubric_path,
         )
+        created.append(UploadResponse.model_validate(row))
 
-        .all()
-    )
+    return BulkUploadResponse(uploaded=len(created), items=created)
 
-    return uploads
+
+@router.get("/uploads", response_model=list[UploadResponse])
+def get_uploads(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    role = (current_user.get("role") or "").lower()
+    q = db.query(UploadedFile)
+    if role not in {r.lower() for r in REVIEW_ROLES}:
+        q = q.filter(UploadedFile.owner_id == current_user["id"])
+    return q.order_by(UploadedFile.created_at.desc()).all()

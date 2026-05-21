@@ -14,19 +14,18 @@ from models.question_crop import QuestionCrop
 from models.upload_model import UploadedFile
 from services.pipeline import run_extract_phase
 from services.pipeline.schemas import GradingRubric
+from core.config import settings
 from services.tribunal_runner import resolve_rubric_path, run_tribunal_for_upload
-router = APIRouter(tags=["grading"])
 
-_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_RUBRIC = _ROOT / "examples" / "sample_rubric.json"
+router = APIRouter(tags=["grading"])
 
 
 def _upload_file_path(upload: UploadedFile) -> str:
-    return upload.file_url.replace("http://127.0.0.1:8000/", "").lstrip("/")
+    return str(Path(settings.UPLOAD_DIR) / upload.filename)
 
 
-def _default_rubric_path() -> str | None:
-    return str(DEFAULT_RUBRIC) if DEFAULT_RUBRIC.exists() else None
+def _rubric_path_for_upload(upload: UploadedFile) -> str | None:
+    return resolve_rubric_path(upload.rubric_path)
 
 
 @router.post("/extract/{upload_id}")
@@ -44,7 +43,7 @@ def pipeline_extract(
         result = run_extract_phase(
             upload_id=upload.id,
             file_path=_upload_file_path(upload),
-            rubric_path=_default_rubric_path(),
+            rubric_path=_rubric_path_for_upload(upload),
         )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -99,7 +98,7 @@ def pipeline_run_tribunal(
         result = run_tribunal_for_upload(
             upload_id=upload.id,
             file_path=_upload_file_path(upload),
-            rubric_path=resolve_rubric_path(),
+            rubric_path=_rubric_path_for_upload(upload),
             owner_email=current_user.get("email") or str(current_user.get("id")),
         )
     except FileNotFoundError as exc:

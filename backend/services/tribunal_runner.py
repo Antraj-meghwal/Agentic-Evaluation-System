@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from core.config import settings
 from db.session import SessionLocal
 from models.batch import Batch, BatchStatus
 from models.grading_result import GradingResult, ResolutionStatus
@@ -20,21 +21,16 @@ from services.rag_helper import retrieve_similar_answers, store_graded_answer
 from services.tribunal_agents import run_critic, run_grader
 
 
-def _default_rubric_paths() -> tuple[Path, Path]:
+def resolve_rubric_path(upload_rubric_path: str | None = None) -> str | None:
+    if upload_rubric_path:
+        local = Path(settings.UPLOAD_DIR) / upload_rubric_path
+        if local.exists():
+            return str(local)
+        if Path(upload_rubric_path).exists():
+            return upload_rubric_path
     root = Path(__file__).resolve().parents[2]
-    return (
-        root / "examples" / "sample_rubric.json",
-        Path(__file__).resolve().parents[1] / "data" / "rubrics" / "sample_rubric.json",
-    )
-
-
-def resolve_rubric_path() -> str | None:
-    primary, fallback = _default_rubric_paths()
-    if primary.exists():
-        return str(primary)
-    if fallback.exists():
-        return str(fallback)
-    return None
+    default = root / "examples" / "sample_rubric.json"
+    return str(default) if default.exists() else None
 
 
 def build_tribunal_context(ctx: GradingContext, upload_id: int) -> dict[str, Any]:

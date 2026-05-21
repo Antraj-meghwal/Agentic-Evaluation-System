@@ -22,6 +22,24 @@ export default function Navbar() {
             </div>
             
             <div className="flex items-center gap-6">
+                {["ta", "professor", "instructor", "admin"].includes(role) && (
+                    <button
+                        type="button"
+                        onClick={() => navigate("/review")}
+                        className="text-sm text-slate-300 hover:text-white"
+                    >
+                        Review queue
+                    </button>
+                )}
+                {["professor", "instructor", "admin"].includes(role) && (
+                    <button
+                        type="button"
+                        onClick={() => navigate("/upload")}
+                        className="text-sm text-slate-300 hover:text-white"
+                    >
+                        Upload
+                    </button>
+                )}
                 <div className="hidden md:flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
                     <span className="text-sm font-medium text-slate-300 capitalize">{role || "Admin"} Portal</span>

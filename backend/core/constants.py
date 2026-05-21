@@ -13,7 +13,7 @@ ALLOWED_EXTENSIONS = {
 # Maximum file size (bytes)
 # 5 MB default
 # -----------------------------------
-MAX_FILE_SIZE = 5 * 1024 * 1024
+MAX_FILE_SIZE = 50 * 1024 * 1024
 
 
 # -----------------------------------

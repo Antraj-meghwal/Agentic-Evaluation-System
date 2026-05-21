@@ -12,6 +12,7 @@ To ensure fairness and reliability, AI-generated evaluations are reviewed throug
 ## Quick start (for reviewers)
 
 **Full instructions:** [docs/SETUP.md](docs/SETUP.md)  
+**Project goals checklist:** [docs/PROJECT_GOALS.md](docs/PROJECT_GOALS.md)  
 **Before pushing to GitHub:** [docs/SECURITY.md](docs/SECURITY.md) and `./scripts/check-secrets.sh`
 
 ```bash
