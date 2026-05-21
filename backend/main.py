@@ -41,6 +41,15 @@ from api.routes.review_routes import (
 from api.routes.export_routes import (
     router as export_api_router
 )
+from api.routes.grading_routes import (
+    router as grading_api_router
+)
+from api.routes.results_routes import (
+    router as results_api_router
+)
+from api.routes.status_routes import (
+    router as status_api_router
+)
 
 
 # Create app
@@ -102,6 +111,21 @@ app.include_router(
     export_api_router,
     prefix="/api/export",
     tags=["export"]
+)
+app.include_router(
+    grading_api_router,
+    prefix="/api/grading",
+    tags=["grading"]
+)
+app.include_router(
+    results_api_router,
+    prefix="/api/results",
+    tags=["results"]
+)
+app.include_router(
+    status_api_router,
+    prefix="/api/status",
+    tags=["status"]
 )
 
 
