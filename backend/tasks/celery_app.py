@@ -3,10 +3,9 @@ from celery import Celery
 
 celery_app = Celery(
     "gradeops",
-
     broker="redis://localhost:6379/0",
-
-    backend="redis://localhost:6379/0"
+    backend="redis://localhost:6379/0",
+    include=["tasks.grading_tasks", "tasks.batch_tasks"]
 )
 
 

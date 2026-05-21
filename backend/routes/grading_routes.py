@@ -152,6 +152,67 @@ async def pipeline_run_with_rubric(
     return result
 
 
+@router.post("/run-async/{upload_id}")
+def pipeline_run_async(
+    upload_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_role(GRADING_ROLES)),
+):
+    """
+    Queue full pipeline asynchronously via Celery.
+    """
+    upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+
+    upload.status = "processing"
+    db.commit()
+
+    from tasks.batch_tasks import process_upload_batch_task
+    task = process_upload_batch_task.delay(
+        upload_id=upload.id,
+        file_path=_upload_file_path(upload),
+        rubric_path=resolve_rubric_path(),
+        owner_email=current_user.get("email") or str(current_user.get("id")),
+    )
+    
+    return {"status": "queued", "task_id": task.id, "upload_id": upload_id}
+
+
+@router.post("/run-async/{upload_id}/rubric")
+async def pipeline_run_async_with_rubric(
+    upload_id: int,
+    rubric: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(require_role(GRADING_ROLES)),
+):
+    """
+    Queue full pipeline asynchronously with custom rubric JSON.
+    """
+    upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+
+    try:
+        rubric_data = json.loads(await rubric.read())
+        GradingRubric.model_validate(rubric_data)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid rubric JSON: {exc}") from exc
+
+    upload.status = "processing"
+    db.commit()
+
+    from tasks.batch_tasks import process_upload_batch_task
+    task = process_upload_batch_task.delay(
+        upload_id=upload.id,
+        file_path=_upload_file_path(upload),
+        rubric_json=rubric_data,
+        owner_email=current_user.get("email") or str(current_user.get("id")),
+    )
+
+    return {"status": "queued", "task_id": task.id, "upload_id": upload_id}
+
+
 @router.get("/results/{upload_id}")
 def get_grading_results(
     upload_id: int,

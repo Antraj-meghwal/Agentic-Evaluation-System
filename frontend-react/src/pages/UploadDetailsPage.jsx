@@ -56,24 +56,52 @@ export default function UploadDetailsPage() {
         setBusy("tribunal");
         setError("");
         try {
-            let res;
             if (rubricFile) {
                 const fd = new FormData();
                 fd.append("rubric", rubricFile);
-                res = await API.post(`/grading/run/${id}/rubric`, fd, {
+                await API.post(`/grading/run-async/${id}/rubric`, fd, {
                     headers: { "Content-Type": "multipart/form-data" },
                 });
             } else {
-                res = await API.post(`/grading/run/${id}`);
+                await API.post(`/grading/run-async/${id}`);
             }
-            setPipelineResult(res.data);
+            // Fetch updated status which should now be "processing"
             await fetchUpload();
         } catch (e) {
-            setError(e.response?.data?.detail || "Tribunal grading failed.");
+            setError(e.response?.data?.detail || "Queueing tribunal grading failed.");
         } finally {
             setBusy("");
         }
     }
+
+    // Polling effect
+    useEffect(() => {
+        let interval;
+        if (upload && upload.status === "processing") {
+            interval = setInterval(async () => {
+                try {
+                    const response = await API.get("/uploads");
+                    const found = response.data.find((item) => item.id === Number(id));
+                    setUpload(found);
+                    
+                    if (found && found.status !== "processing") {
+                        clearInterval(interval);
+                        if (found.status === "graded") {
+                            loadResults();
+                        } else if (found.status === "failed") {
+                            setError("Background processing failed.");
+                        }
+                    }
+                } catch {
+                    // Ignore errors during polling
+                }
+            }, 2000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [upload?.status, id]);
+
 
     async function loadResults() {
         setBusy("results");
@@ -174,11 +202,15 @@ export default function UploadDetailsPage() {
                         </button>
                         <button
                             type="button"
-                            disabled={!!busy}
+                            disabled={!!busy || upload?.status === "processing"}
                             onClick={runTribunal}
                             className="bg-indigo-600 hover:bg-indigo-500 px-6 py-4 rounded-2xl font-semibold disabled:opacity-50"
                         >
-                            {busy === "tribunal" ? "Grading…" : "2. Run Tribunal"}
+                            {upload?.status === "processing" 
+                                ? "Processing (Background)…" 
+                                : busy === "tribunal" 
+                                    ? "Queueing…" 
+                                    : "2. Run Tribunal (Async)"}
                         </button>
                         <button
                             type="button"
