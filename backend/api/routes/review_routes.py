@@ -3,7 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
 from db.session import SessionLocal
-from dependencies import get_current_user
+from core.constants import REVIEW_ROLES
+from dependencies import get_current_user, require_role
 from models.grading_result import GradingResult
 from models.question_crop import QuestionCrop
 from models.review_action import ReviewAction, ReviewActionType
@@ -47,7 +48,7 @@ def _serialize_review_item(db, item: GradingResult) -> dict:
 
 
 @router.get("/review-queue")
-def get_review_queue(_user=Depends(get_current_user)):
+def get_review_queue(_user=Depends(require_role(REVIEW_ROLES))):
     db = SessionLocal()
     try:
         review_items = (
@@ -62,7 +63,7 @@ def get_review_queue(_user=Depends(get_current_user)):
 
 
 @router.get("/stats")
-def review_stats(_user=Depends(get_current_user)):
+def review_stats(_user=Depends(require_role(REVIEW_ROLES))):
     db = SessionLocal()
     try:
         pending = (
@@ -92,7 +93,7 @@ def review_stats(_user=Depends(get_current_user)):
 
 
 @router.post("/approve/{grading_result_id}")
-def approve_grade(grading_result_id: str, _user=Depends(get_current_user)):
+def approve_grade(grading_result_id: str, _user=Depends(require_role(REVIEW_ROLES))):
     db = SessionLocal()
     try:
         gr = (
@@ -124,7 +125,7 @@ def approve_grade(grading_result_id: str, _user=Depends(get_current_user)):
 def override_grade(
     grading_result_id: str,
     review_data: ReviewDecisionSchema,
-    user=Depends(get_current_user),
+    user=Depends(require_role(REVIEW_ROLES)),
 ):
     db = SessionLocal()
     try:

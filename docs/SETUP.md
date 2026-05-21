@@ -70,13 +70,26 @@ npm run dev
 
 Open http://localhost:5173
 
-## 5. Smoke test
+## 5. Demo users (optional)
 
-1. Register a user (`POST /register` via Swagger or the UI).
+```bash
+cd backend && python scripts/seed_demo_users.py
+```
+
+| Email | Password | Role |
+|-------|----------|------|
+| instructor@gradeops.edu | demo1234 | instructor |
+| ta@gradeops.edu | demo1234 | ta |
+
+## 6. Smoke test
+
+1. Register at `/register` or use demo accounts above.
 2. Log in — you should receive a JWT.
 3. Upload a sample PDF + rubric from `examples/sample_rubric.json`.
 4. Run **Extract** then **Tribunal** on the upload details page.
 5. With `PIPELINE_DRY_RUN=true`, grades are mock but the full UI flow works.
+
+See [PROJECT_GOALS.md](PROJECT_GOALS.md) for brief ↔ implementation mapping.
 
 ## Environment reference
 

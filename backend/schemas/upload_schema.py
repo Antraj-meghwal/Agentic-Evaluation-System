@@ -18,8 +18,14 @@ class UploadResponse(BaseModel):
 
     status: str
 
+    rubric_path: str | None = None
+
     created_at: datetime
 
     class Config:
-
         from_attributes = True
+
+
+class BulkUploadResponse(BaseModel):
+    uploaded: int
+    items: list[UploadResponse]

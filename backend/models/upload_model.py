@@ -47,6 +47,12 @@ class UploadedFile(Base):
         ForeignKey("users.id")
     )
 
+    # Optional path to JSON rubric (local path or cloud key)
+    rubric_path = Column(
+        String,
+        nullable=True,
+    )
+
     # Processing status
     status = Column(
         String,
