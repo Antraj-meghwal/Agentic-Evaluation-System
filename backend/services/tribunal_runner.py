@@ -185,6 +185,13 @@ def run_tribunal_for_upload(
                 plagiarism_flags=[],
             )
 
+            store_graded_answer(
+                crop_id=str(crop.id),
+                question_id=ctx.question.id,
+                answer_text=ocr_text or grading_result.final_feedback or "",
+                final_score=grading_result.final_score,
+            )
+
             results.append(
                 {
                     "grading_result_id": str(grading_result.id),

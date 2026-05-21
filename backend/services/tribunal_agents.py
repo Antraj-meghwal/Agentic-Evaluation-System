@@ -54,6 +54,9 @@ Rubric:
 OCR Transcript:
 {grading_context.get("ocr_text", "")}
 
+Similar Previously Graded Answers (consistency reference only):
+{json.dumps(grading_context.get("similar_answers", []), indent=2)}
+
 Required JSON format:
 {{
   "score": int,
