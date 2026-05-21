@@ -15,13 +15,19 @@ To ensure fairness and reliability, AI-generated evaluations are reviewed throug
 **Project goals checklist:** [docs/PROJECT_GOALS.md](docs/PROJECT_GOALS.md)  
 **Before pushing to GitHub:** [docs/SECURITY.md](docs/SECURITY.md) and `./scripts/check-secrets.sh`
 
+Run **one command per line** (zsh treats `#` as a comment only at the start of a line):
+
 ```bash
-./scripts/setup_database.sh              # DB + migrations (Docker 5433 or local 5432)
-./scripts/check-secrets.sh               # before git push
+./scripts/setup_database.sh
+./scripts/check-secrets.sh
 cp frontend-react/.env.example frontend-react/.env.local
-cd backend && python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && uvicorn main:app --reload
-# new terminal:
+cd backend && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+./scripts/run_dev.sh
+```
+
+Frontend (second terminal):
+
+```bash
 cd frontend-react && npm install && npm run dev
 ```
 
