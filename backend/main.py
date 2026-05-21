@@ -26,9 +26,28 @@ from routes.upload_routes import router as upload_router
 from routes.grading_routes import router as grading_router
 from routes.user_routes import router as user_router
 
-from api.routes.review_routes import router as review_api_router
-from api.routes.export_routes import router as export_api_router
-from api.routes.dashboard_routes import router as dashboard_api_router
+# Import new API routes
+from api.routes.auth_routes import (
+    router as auth_api_router
+)
+from api.routes.batch_routes import (
+    router as batch_api_router
+)
+from api.routes.review_routes import (
+    router as review_api_router
+)
+from api.routes.export_routes import (
+    router as export_api_router
+)
+from api.routes.grading_routes import (
+    router as grading_api_router
+)
+from api.routes.results_routes import (
+    router as results_api_router
+)
+from api.routes.status_routes import (
+    router as status_api_router
+)
 
 
 app = FastAPI(
@@ -53,12 +72,62 @@ app.mount(
 
 app.include_router(upload_router)
 app.include_router(user_router)
-app.include_router(grading_router, prefix="/grading", tags=["grading"])
-app.include_router(review_api_router, prefix="/api/review", tags=["review"])
-app.include_router(export_api_router, prefix="/api/export", tags=["export"])
-app.include_router(dashboard_api_router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(
+    grading_router,
+    prefix="/grading",
+    tags=["grading"]
+)
+
+# Register new API routes
+app.include_router(
+    auth_api_router,
+    prefix="/api/auth",
+    tags=["auth"]
+)
+app.include_router(
+    batch_api_router,
+    prefix="/api/batches",
+    tags=["batches"]
+)
+app.include_router(
+    review_api_router,
+    prefix="/api/review",
+    tags=["review"]
+)
+app.include_router(
+    export_api_router,
+    prefix="/api/export",
+    tags=["export"]
+)
+app.include_router(
+    grading_api_router,
+    prefix="/api/grading",
+    tags=["grading"]
+)
+app.include_router(
+    results_api_router,
+    prefix="/api/results",
+    tags=["results"]
+)
+app.include_router(
+    status_api_router,
+    prefix="/api/status",
+    tags=["status"]
+)
 
 
 @app.get("/")
 def home():
-    return {"message": "GradeOps Backend Running"}
+
+    return {
+
+        "message": "GradeOps Backend Running"
+    }
+
+
+@app.get("/test-db")
+def test_db():
+
+    return {
+        "message": "DB working"
+    }
