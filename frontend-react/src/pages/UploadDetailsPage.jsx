@@ -12,6 +12,10 @@ export default function UploadDetailsPage() {
     const [rubricFile, setRubricFile] = useState(null);
     const [pipelineResult, setPipelineResult] = useState(null);
     const [error, setError] = useState("");
+    const [jobMessage, setJobMessage] = useState("");
+    const [taskId, setTaskId] = useState(null);
+    const [processingSince, setProcessingSince] = useState(null);
+    const [stuckWarning, setStuckWarning] = useState(false);
 
     async function fetchUpload() {
         try {
@@ -80,16 +84,21 @@ export default function UploadDetailsPage() {
     async function runTribunal() {
         setBusy("tribunal");
         setError("");
+        setStuckWarning(false);
         try {
+            let res;
             if (rubricFile) {
                 const fd = new FormData();
                 fd.append("rubric", rubricFile);
-                await API.post(`/grading/run-async/${id}/rubric`, fd, {
+                res = await API.post(`/grading/run-async/${id}/rubric`, fd, {
                     headers: { "Content-Type": "multipart/form-data" },
                 });
             } else {
-                await API.post(`/grading/run-async/${id}`);
+                res = await API.post(`/grading/run-async/${id}`);
             }
+            setTaskId(res.data.task_id || null);
+            setJobMessage(res.data.message || "");
+            setProcessingSince(Date.now());
             await fetchUpload();
         } catch (e) {
             setError(e.response?.data?.detail || "Queueing tribunal grading failed.");
@@ -97,6 +106,33 @@ export default function UploadDetailsPage() {
             setBusy("");
         }
     }
+
+    async function resetStuckProcessing() {
+        setBusy("reset");
+        setError("");
+        try {
+            await API.post(`/grading/reset-status/${id}`);
+            setTaskId(null);
+            setJobMessage("");
+            setProcessingSince(null);
+            setStuckWarning(false);
+            await fetchUpload();
+        } catch (e) {
+            setError(e.response?.data?.detail || "Could not reset status.");
+        } finally {
+            setBusy("");
+        }
+    }
+
+    useEffect(() => {
+        if (upload?.status === "processing" && !processingSince) {
+            setProcessingSince(Date.now());
+        }
+        if (upload?.status !== "processing") {
+            setProcessingSince(null);
+            setStuckWarning(false);
+        }
+    }, [upload?.status, processingSince]);
 
     useEffect(() => {
         let interval;
@@ -107,12 +143,28 @@ export default function UploadDetailsPage() {
                     const found = response.data;
                     setUpload(found);
 
+                    if (processingSince && Date.now() - processingSince > 120000) {
+                        setStuckWarning(true);
+                    }
+
+                    if (taskId && !taskId.startsWith("bg-")) {
+                        const taskRes = await API.get(`/grading/task/${taskId}`);
+                        if (taskRes.data.state === "PENDING" && processingSince && Date.now() - processingSince > 45000) {
+                            setStuckWarning(true);
+                            setJobMessage(
+                                "Job is still waiting in the queue. Start Celery: ./scripts/run_celery.sh — or click Reset and use Run Tribunal (now)."
+                            );
+                        }
+                    }
+
                     if (found && found.status !== "processing") {
                         clearInterval(interval);
+                        setTaskId(null);
+                        setJobMessage("");
                         if (found.status === "graded") {
                             loadResults();
                         } else if (found.status === "failed") {
-                            setError("Background processing failed.");
+                            setError("Grading failed. Click Reset, then try Run Tribunal (now).");
                         }
                     }
                 } catch {
@@ -123,7 +175,7 @@ export default function UploadDetailsPage() {
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [upload?.status, id]);
+    }, [upload?.status, id, taskId, processingSince]);
 
     async function loadResults() {
         setBusy("results");
@@ -225,6 +277,31 @@ export default function UploadDetailsPage() {
                         </p>
                     </div>
 
+                    {upload.status === "processing" && (
+                        <div className="mt-6 p-4 rounded-xl bg-violet-50 border border-violet-200">
+                            <p className="text-sm font-semibold text-violet-800">
+                                Grading in progress…
+                            </p>
+                            {jobMessage && (
+                                <p className="text-xs text-violet-700 mt-1">{jobMessage}</p>
+                            )}
+                            {stuckWarning && (
+                                <p className="text-xs text-amber-700 mt-2 font-medium">
+                                    Taking too long? The background worker may not be running.
+                                    Reset, then use <strong>Run Tribunal (now)</strong>.
+                                </p>
+                            )}
+                            <button
+                                type="button"
+                                disabled={!!busy}
+                                onClick={resetStuckProcessing}
+                                className="btn-secondary btn-sm mt-3"
+                            >
+                                {busy === "reset" ? "Resetting…" : "Reset stuck status"}
+                            </button>
+                        </div>
+                    )}
+
                     {upload.status === "graded" && (
                         <Link
                             to="/review"
@@ -245,11 +322,15 @@ export default function UploadDetailsPage() {
                         </button>
                         <button
                             type="button"
-                            disabled={!!busy || upload?.status === "processing"}
+                            disabled={!!busy && busy !== "reset"}
                             onClick={runTribunalSync}
                             className="btn-primary"
                         >
-                            {busy === "tribunal-sync" ? "Grading…" : "2. Run Tribunal (now)"}
+                            {busy === "tribunal-sync"
+                                ? "Grading…"
+                                : upload?.status === "processing"
+                                  ? "Run Tribunal (now) — overrides stuck job"
+                                  : "2. Run Tribunal (now)"}
                         </button>
                         <button
                             type="button"
@@ -260,7 +341,7 @@ export default function UploadDetailsPage() {
                             {upload?.status === "processing"
                                 ? "Processing…"
                                 : busy === "tribunal"
-                                  ? "Queueing…"
+                                  ? "Starting…"
                                   : "Run in background"}
                         </button>
                         <button

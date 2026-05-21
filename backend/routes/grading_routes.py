@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from core.constants import GRADING_ROLES, REVIEW_ROLES
@@ -15,9 +15,63 @@ from models.upload_model import UploadedFile
 from services.pipeline import run_extract_phase
 from services.pipeline.schemas import GradingRubric
 from core.config import settings
+from services.job_runner import (
+    celery_workers_available,
+    get_celery_task_state,
+    run_tribunal_and_update_status,
+)
 from services.tribunal_runner import resolve_rubric_path, run_tribunal_for_upload
 
 router = APIRouter(tags=["grading"])
+
+
+def _queue_tribunal_job(
+    upload: UploadedFile,
+    *,
+    file_path: str,
+    rubric_path: str | None,
+    rubric_json: dict | None,
+    owner_email: str,
+    background_tasks: BackgroundTasks,
+) -> dict:
+    """Use Celery if a worker is running; otherwise run in-process (no stuck queue)."""
+    owner = owner_email or "system"
+    if celery_workers_available():
+        from tasks.batch_tasks import process_upload_batch_task
+
+        task = process_upload_batch_task.delay(
+            upload_id=upload.id,
+            file_path=file_path,
+            rubric_path=rubric_path,
+            rubric_json=rubric_json,
+            owner_email=owner,
+        )
+        return {
+            "status": "queued",
+            "mode": "celery",
+            "task_id": task.id,
+            "upload_id": upload.id,
+            "message": "Queued on Celery worker.",
+        }
+
+    background_tasks.add_task(
+        run_tribunal_and_update_status,
+        upload.id,
+        file_path,
+        rubric_path=rubric_path,
+        rubric_json=rubric_json,
+        owner_email=owner,
+    )
+    return {
+        "status": "started",
+        "mode": "background",
+        "task_id": f"bg-{upload.id}",
+        "upload_id": upload.id,
+        "message": (
+            "No Celery worker detected — running grading in the API process. "
+            "Use “Run Tribunal (now)” for synchronous grading, or start ./scripts/run_celery.sh."
+        ),
+    }
 
 
 def _upload_file_path(upload: UploadedFile) -> str:
@@ -149,12 +203,11 @@ async def pipeline_run_with_rubric(
 @router.post("/run-async/{upload_id}")
 def pipeline_run_async(
     upload_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(require_role(GRADING_ROLES)),
 ):
-    """
-    Queue full pipeline asynchronously via Celery.
-    """
+    """Run full pipeline in background (Celery if worker up, else in API process)."""
     upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -162,27 +215,25 @@ def pipeline_run_async(
     upload.status = "processing"
     db.commit()
 
-    from tasks.batch_tasks import process_upload_batch_task
-    task = process_upload_batch_task.delay(
-        upload_id=upload.id,
+    return _queue_tribunal_job(
+        upload,
         file_path=_upload_file_path(upload),
         rubric_path=_rubric_path_for_upload(upload),
+        rubric_json=None,
         owner_email=current_user.get("email") or str(current_user.get("id")),
+        background_tasks=background_tasks,
     )
-    
-    return {"status": "queued", "task_id": task.id, "upload_id": upload_id}
 
 
 @router.post("/run-async/{upload_id}/rubric")
 async def pipeline_run_async_with_rubric(
     upload_id: int,
+    background_tasks: BackgroundTasks,
     rubric: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user=Depends(require_role(GRADING_ROLES)),
 ):
-    """
-    Queue full pipeline asynchronously with custom rubric JSON.
-    """
+    """Background pipeline with custom rubric JSON."""
     upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
     if not upload:
         raise HTTPException(status_code=404, detail="Upload not found")
@@ -196,15 +247,51 @@ async def pipeline_run_async_with_rubric(
     upload.status = "processing"
     db.commit()
 
-    from tasks.batch_tasks import process_upload_batch_task
-    task = process_upload_batch_task.delay(
-        upload_id=upload.id,
+    return _queue_tribunal_job(
+        upload,
         file_path=_upload_file_path(upload),
+        rubric_path=None,
         rubric_json=rubric_data,
         owner_email=current_user.get("email") or str(current_user.get("id")),
+        background_tasks=background_tasks,
     )
 
-    return {"status": "queued", "task_id": task.id, "upload_id": upload_id}
+
+@router.get("/task/{task_id}")
+def get_task_status(
+    task_id: str,
+    _user=Depends(require_role(REVIEW_ROLES)),
+):
+    """Poll Celery task state (PENDING = no worker picked up the job)."""
+    if task_id.startswith("bg-"):
+        return {
+            "task_id": task_id,
+            "state": "STARTED",
+            "ready": False,
+            "mode": "background",
+            "message": "Running inside API process; refresh upload status.",
+        }
+    return get_celery_task_state(task_id)
+
+
+@router.post("/reset-status/{upload_id}")
+def reset_processing_status(
+    upload_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_role(GRADING_ROLES)),
+):
+    """Unstick uploads left in processing (e.g. Celery never ran)."""
+    upload = db.query(UploadedFile).filter(UploadedFile.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+    if upload.status not in ("processing", "failed"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot reset status '{upload.status}'",
+        )
+    upload.status = "uploaded"
+    db.commit()
+    return {"upload_id": upload_id, "status": upload.status}
 
 
 @router.get("/results/{upload_id}")
