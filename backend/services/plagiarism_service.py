@@ -185,3 +185,89 @@ def detect_visual_plagiarism(
             threshold,
         )
     return flags
+
+
+# ---------------------------------------------------------------------------
+# 3.  Cross-upload plagiarism (different student papers, same rubric batch)
+# ---------------------------------------------------------------------------
+
+def _transcripts_for_upload(db, upload_id: int) -> dict[str, str]:
+    """Load question_id → OCR transcript for a graded upload from the DB."""
+    from models.grading_result import GradingResult
+    from models.question_crop import QuestionCrop
+
+    transcripts: dict[str, str] = {}
+    for gr in db.query(GradingResult).all():
+        meta = gr.coordinator_output or {}
+        if int(meta.get("upload_id") or -1) != upload_id:
+            continue
+        crop = (
+            db.query(QuestionCrop)
+            .filter(QuestionCrop.id == gr.question_crop_id)
+            .first()
+        )
+        if crop and crop.question_id:
+            transcripts[crop.question_id] = (crop.ocr_text or "").strip()
+    return transcripts
+
+
+def detect_cross_upload_plagiarism(
+    db,
+    *,
+    current_upload_id: int,
+    owner_id: int | None,
+    rubric_path: str | None,
+    current_transcripts: dict[str, str],
+    threshold: float = PLAGIARISM_SIMILARITY_THRESHOLD,
+) -> list[dict[str, Any]]:
+    """
+    Compare this upload's answers to other exams from the same instructor
+    that share the same rubric (bulk class set).
+    """
+    if not owner_id:
+        return []
+
+    from models.upload_model import UploadedFile
+
+    others = (
+        db.query(UploadedFile)
+        .filter(
+            UploadedFile.owner_id == owner_id,
+            UploadedFile.id != current_upload_id,
+            UploadedFile.rubric_path == rubric_path,
+            UploadedFile.status.in_(("graded", "extracted", "processing")),
+        )
+        .all()
+    )
+    if not others:
+        return []
+
+    flags: list[dict[str, Any]] = []
+    for other in others:
+        other_texts = _transcripts_for_upload(db, other.id)
+        if not other_texts:
+            continue
+        for qid, text_a in current_transcripts.items():
+            text_a = (text_a or "").strip()
+            if len(text_a) < 40:
+                continue
+            text_b = (other_texts.get(qid) or "").strip()
+            if len(text_b) < 40:
+                continue
+            ratio = difflib.SequenceMatcher(None, text_a, text_b).ratio()
+            if ratio >= threshold:
+                flags.append(
+                    {
+                        "question_a": qid,
+                        "question_b": qid,
+                        "upload_a": current_upload_id,
+                        "upload_b": other.id,
+                        "similarity": round(ratio, 3),
+                        "reason": (
+                            f"Cross-paper Q{qid}: uploads {current_upload_id} vs "
+                            f"{other.id} are {ratio:.0%} similar"
+                        ),
+                        "flag": "CROSS_PAPER_PLAGIARISM_SUSPECTED",
+                    }
+                )
+    return flags

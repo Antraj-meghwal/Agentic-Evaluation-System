@@ -9,7 +9,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     }
 
     // Check if the route restricts access by role
-    if (allowedRoles && !allowedRoles.includes(role)) {
+    const effectiveRole = role === "instructor" ? "professor" : role;
+    if (allowedRoles && !allowedRoles.includes(effectiveRole) && !allowedRoles.includes(role)) {
         // If user doesn't have the right role, bounce them to their specific dashboard
         return <Navigate to="/dashboard" />;
     }
