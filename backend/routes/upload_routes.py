@@ -128,7 +128,7 @@ async def upload_bulk(
     return BulkUploadResponse(uploaded=len(created), items=created)
 
 
-@router.get("/uploads/{upload_id}", response_model=UploadResponse)
+@router.get("/api/uploads/{upload_id}", response_model=UploadResponse)
 def get_upload(
     upload_id: int,
     db: Session = Depends(get_db),
@@ -144,7 +144,7 @@ def get_upload(
     return upload
 
 
-@router.get("/uploads", response_model=list[UploadResponse])
+@router.get("/api/uploads", response_model=list[UploadResponse])
 def get_uploads(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),

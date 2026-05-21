@@ -72,11 +72,10 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 Or from repo root: `./scripts/run_dev.sh` (activates venv automatically).
 
-Optional — async tribunal (Celery) in a **second terminal**:
+Optional — async tribunal (Celery) in a **second terminal** (needs Redis from Docker):
 
 ```bash
-cd backend && source .venv/bin/activate
-celery -A tasks.celery_app worker --loglevel=info
+./scripts/run_celery.sh
 ```
 
 API docs: http://127.0.0.1:8000/docs

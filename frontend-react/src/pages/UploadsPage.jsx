@@ -12,7 +12,7 @@ export default function UploadsPage() {
 
     async function fetchUploads() {
         try {
-            const response = await API.get("/uploads");
+            const response = await API.get("/api/uploads");
             setUploads(response.data);
         } catch (error) {
             console.log(error);

@@ -24,7 +24,9 @@ fi
 # shellcheck disable=SC1091
 source "$VENV/bin/activate"
 
-python -m pip install --upgrade pip setuptools wheel
+python -m pip install --upgrade pip wheel
+# torch requires setuptools<82
+pip install "setuptools>=70,<82"
 echo "Installing dependencies from requirements.txt (this may take several minutes)..."
 pip install -r "$REQ"
 
