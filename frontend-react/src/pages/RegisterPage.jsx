@@ -28,41 +28,44 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-5">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 w-full max-w-lg">
-                <h1 className="text-3xl font-bold mb-2">Create account</h1>
-                <p className="text-slate-400 text-sm mb-8">
+        <div className="auth-bg">
+            <div className="auth-blob-teal top-0 right-10" />
+            <div className="auth-blob-violet bottom-0 left-10" />
+
+            <div className="card-auth relative z-10">
+                <h1 className="text-3xl font-extrabold heading-gradient mb-2">Create account</h1>
+                <p className="text-muted text-sm mb-8">
                     Instructors upload exams; TAs review AI grades in the queue.
                 </p>
 
                 <form onSubmit={handleRegister} className="space-y-5">
-                    <div>
-                        <label className="text-sm text-slate-400">Email</label>
+                    <div className="space-y-1.5">
+                        <label className="label-text">Email</label>
                         <input
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full mt-1 p-3 rounded-xl bg-slate-950 border border-slate-700"
+                            className="input-field"
                         />
                     </div>
-                    <div>
-                        <label className="text-sm text-slate-400">Password</label>
+                    <div className="space-y-1.5">
+                        <label className="label-text">Password</label>
                         <input
                             type="password"
                             required
                             minLength={6}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full mt-1 p-3 rounded-xl bg-slate-950 border border-slate-700"
+                            className="input-field"
                         />
                     </div>
-                    <div>
-                        <label className="text-sm text-slate-400">Role</label>
+                    <div className="space-y-1.5">
+                        <label className="label-text">Role</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
-                            className="w-full mt-1 p-3 rounded-xl bg-slate-950 border border-slate-700"
+                            className="input-field"
                         >
                             <option value="instructor">Instructor (upload &amp; grade)</option>
                             <option value="professor">Professor (upload &amp; grade)</option>
@@ -70,21 +73,17 @@ export default function RegisterPage() {
                         </select>
                     </div>
 
-                    {error && <p className="text-red-400 text-sm">{error}</p>}
-                    {message && <p className="text-emerald-400 text-sm">{message}</p>}
+                    {error && <div className="alert-error">{error}</div>}
+                    {message && <p className="alert-success">{message}</p>}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-semibold disabled:opacity-50"
-                    >
-                        {loading ? "Creating…" : "Register"}
+                    <button type="submit" disabled={loading} className="btn-primary-full">
+                        {loading ? "Creating…" : "Create Account"}
                     </button>
                 </form>
 
                 <p className="text-center text-slate-500 text-sm mt-6">
                     Already have an account?{" "}
-                    <Link to="/" className="text-indigo-400 hover:underline">
+                    <Link to="/" className="font-semibold text-violet-600 hover:underline">
                         Sign in
                     </Link>
                 </p>
