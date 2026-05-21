@@ -15,10 +15,13 @@ export default function UploadDetailsPage() {
 
     async function fetchUpload() {
         try {
-            const response = await API.get(`/uploads/${id}`);
+            const response = await API.get(`/api/uploads/${id}`);
             setUpload(response.data);
-        } catch {
-            setError("Could not load upload.");
+            setError("");
+        } catch (err) {
+            const detail = err.response?.data?.detail;
+            setError(detail || "Could not load upload.");
+            setUpload(null);
         } finally {
             setLoading(false);
         }
@@ -100,7 +103,7 @@ export default function UploadDetailsPage() {
         if (upload && upload.status === "processing") {
             interval = setInterval(async () => {
                 try {
-                    const response = await API.get(`/uploads/${id}`);
+                    const response = await API.get(`/api/uploads/${id}`);
                     const found = response.data;
                     setUpload(found);
 
@@ -173,8 +176,15 @@ export default function UploadDetailsPage() {
 
     if (!upload) {
         return (
-            <div className="page-bg flex items-center justify-center min-h-screen">
-                <p className="text-muted font-medium">Upload not found</p>
+            <div className="page-bg min-h-screen">
+                <Navbar />
+                <div className="max-w-lg mx-auto p-10 text-center">
+                    <p className="text-lg font-semibold text-slate-800 mb-2">Upload not found</p>
+                    <p className="text-muted text-sm mb-6">{error || "This upload may have been deleted or the link is invalid."}</p>
+                    <Link to="/uploads" className="btn-primary">
+                        Back to uploads
+                    </Link>
+                </div>
             </div>
         );
     }

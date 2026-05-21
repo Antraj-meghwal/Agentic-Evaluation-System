@@ -33,11 +33,14 @@ export default function UploadPage() {
 
             const count = response.data.uploaded;
             setMessage(`Uploaded ${count} file(s) successfully.`);
-            const first = response.data.items?.[0];
-            if (first?.id) {
+            const items = response.data.items ?? [];
+            const first = items[0];
+            if (first?.id != null) {
                 navigate(`/uploads/${first.id}`);
-            } else {
+            } else if (items.length > 0) {
                 navigate("/uploads");
+            } else {
+                setMessage("Upload completed but no file records were returned.");
             }
         } catch (err) {
             setMessage(err.response?.data?.detail || "Upload failed.");

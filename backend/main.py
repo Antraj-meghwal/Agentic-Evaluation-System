@@ -33,14 +33,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 app.include_router(upload_router)
 app.include_router(user_router)
 app.include_router(grading_router, prefix="/grading", tags=["grading"])
 app.include_router(review_api_router, prefix="/api/review", tags=["review"])
 app.include_router(export_api_router, prefix="/api/export", tags=["export"])
 app.include_router(dashboard_api_router, prefix="/api/dashboard", tags=["dashboard"])
+
+# Serve stored PDFs/images only — must be after API routes; do not use /uploads/{id} for JSON API
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 @app.get("/")
