@@ -26,52 +26,56 @@ export default function AdminDashboard() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
+        <div className="page-bg">
             <Navbar />
-            <div className="max-w-7xl mx-auto p-10">
-                <div className="flex items-center justify-between mb-12">
+            <div className="max-w-7xl mx-auto p-6 md:p-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
                     <div>
-                        <h1 className="text-4xl font-bold mb-2">Professor Dashboard</h1>
-                        <p className="text-slate-400">Manage and review AI evaluations efficiently.</p>
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">
+                            Professor Dashboard
+                        </h1>
+                        <p className="text-muted">Manage and review AI evaluations efficiently.</p>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => navigate("/upload")}
-                        className="bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2"
-                    >
-                        <span>+ New Upload</span>
+                    <button type="button" onClick={() => navigate("/upload")} className="btn-primary">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        New Upload
                     </button>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6 mb-10">
+                <div className="grid md:grid-cols-3 gap-5 mb-10">
                     <StatCard
                         title="Total Uploads"
                         value={stats.upload_count}
                         subtitle="Answer sheets processed"
                         onClick={() => navigate("/uploads")}
+                        accent="teal"
                     />
                     <StatCard
                         title="Pending Reviews"
                         value={stats.pending_reviews}
                         subtitle="Requires human validation"
                         onClick={() => navigate("/review")}
+                        accent="violet"
                     />
                     <StatCard
                         title="Avg. Class Score"
                         value={stats.avg_class_score_pct ? `${stats.avg_class_score_pct}%` : "—"}
                         subtitle="Across graded questions"
                         onClick={() => navigate("/uploads")}
+                        accent="orange"
                     />
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-                    <h2 className="text-2xl font-semibold mb-4">Recent Uploads</h2>
+                <div className="card-lg">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4">Recent Uploads</h2>
                     {stats.recent_uploads?.length === 0 ? (
-                        <p className="text-slate-500 text-sm">
+                        <p className="text-muted text-sm">
                             No uploads yet. Upload an exam PDF to start the Tribunal pipeline.
                         </p>
                     ) : (
-                        <div className="text-slate-500 text-sm flex flex-col gap-4">
+                        <div className="flex flex-col gap-3">
                             {stats.recent_uploads.map((item) => (
                                 <div
                                     key={item.upload_id}
@@ -81,16 +85,16 @@ export default function AdminDashboard() {
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter") navigate(`/uploads/${item.upload_id}`);
                                     }}
-                                    className="flex items-center gap-4 p-4 bg-slate-950/50 rounded-xl border border-slate-800/50 cursor-pointer hover:border-indigo-500/50 transition-all"
+                                    className="list-item"
                                 >
-                                    <div className="w-10 h-10 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-teal-100 to-violet-100 rounded-xl flex items-center justify-center text-teal-600 shrink-0">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-white font-medium">{item.filename}</p>
-                                        <p className="text-xs">
+                                        <p className="font-semibold text-slate-800">{item.filename}</p>
+                                        <p className="text-xs text-muted mt-0.5">
                                             {item.status} ·{" "}
                                             {item.created_at
                                                 ? new Date(item.created_at).toLocaleString()

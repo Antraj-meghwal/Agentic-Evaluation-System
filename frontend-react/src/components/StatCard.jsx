@@ -1,19 +1,23 @@
-export default function StatCard({ title, value, subtitle, onClick }) {
+export default function StatCard({ title, value, subtitle, onClick, accent = "teal" }) {
+    const accents = {
+        teal: "from-teal-500/10 to-indigo-500/5 group-hover:border-teal-300 group-hover:shadow-teal-500/10",
+        orange: "from-orange-500/10 to-amber-500/5 group-hover:border-orange-300 group-hover:shadow-orange-500/10",
+        violet: "from-violet-500/10 to-fuchsia-500/5 group-hover:border-violet-300 group-hover:shadow-violet-500/10",
+    };
+
     return (
         <div
             onClick={onClick}
-            className="group relative bg-slate-900/50 backdrop-blur-sm border border-slate-800 hover:border-indigo-500/50 rounded-3xl p-7 transition-all duration-300 cursor-pointer overflow-hidden hover:shadow-[0_8px_30px_rgba(99,102,241,0.1)] hover:-translate-y-1"
+            className={`group relative card rounded-3xl p-7 transition-all duration-300 cursor-pointer overflow-hidden hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br ${accents[accent] || accents.teal}`}
         >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
-            <h2 className="text-lg font-medium text-slate-400 group-hover:text-indigo-400 transition-colors">
+            <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-gradient-to-br from-teal-400/10 to-violet-400/10 transition-transform group-hover:scale-125" />
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide group-hover:text-teal-600 transition-colors">
                 {title}
             </h2>
-            <p className="text-5xl font-bold mt-4 mb-2 text-white">
+            <p className="text-5xl font-extrabold mt-3 mb-2 text-slate-800 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-teal-600 group-hover:to-violet-600 transition-all">
                 {value}
             </p>
-            <p className="text-sm text-slate-500 font-medium">
-                {subtitle}
-            </p>
+            <p className="text-sm text-slate-500 font-medium">{subtitle}</p>
         </div>
     );
 }

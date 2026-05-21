@@ -47,18 +47,27 @@ export default function UploadPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
+        <div className="page-bg">
             <Navbar />
-            <div className="max-w-3xl mx-auto pt-20 px-5">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 shadow-2xl">
-                    <h1 className="text-4xl font-bold mb-2">Upload Exam Scans</h1>
-                    <p className="text-slate-400 mb-8">
-                        Bulk upload PDF answer sheets and attach a JSON rubric for granular grading criteria.
-                    </p>
+            <div className="max-w-3xl mx-auto pt-12 md:pt-16 px-5 pb-16">
+                <div className="card-lg">
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-violet-500 flex items-center justify-center shadow-lg shadow-teal-500/25">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-extrabold text-slate-800">Upload Exam Scans</h1>
+                            <p className="text-muted text-sm mt-1">
+                                Bulk upload PDFs and attach a JSON rubric for grading.
+                            </p>
+                        </div>
+                    </div>
 
                     <form onSubmit={handleUpload} className="space-y-6">
                         <div>
-                            <label className="text-sm text-slate-400 font-medium">
+                            <label className="label-text">
                                 Exam files (PDF, PNG, JPG) — multiple allowed
                             </label>
                             <input
@@ -66,41 +75,35 @@ export default function UploadPage() {
                                 multiple
                                 accept=".pdf,.png,.jpg,.jpeg"
                                 onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                                className="w-full mt-2 p-4 rounded-2xl bg-slate-800 border border-slate-700"
+                                className="input-file"
                             />
                             {files.length > 0 && (
-                                <p className="text-xs text-slate-500 mt-2">
+                                <p className="text-xs text-teal-600 font-medium mt-2">
                                     {files.length} file(s) selected
                                 </p>
                             )}
                         </div>
 
                         <div>
-                            <label className="text-sm text-slate-400 font-medium">
-                                Rubric JSON (optional)
-                            </label>
+                            <label className="label-text">Rubric JSON (optional)</label>
                             <input
                                 type="file"
                                 accept=".json,application/json"
                                 onChange={(e) => setRubricFile(e.target.files?.[0] || null)}
-                                className="w-full mt-2 p-4 rounded-2xl bg-slate-800 border border-slate-700"
+                                className="input-file"
                             />
-                            <p className="text-xs text-slate-500 mt-2">
-                                See <code className="text-indigo-400">examples/sample_rubric.json</code> in the repo.
+                            <p className="text-xs text-muted mt-2">
+                                See <code className="text-violet-600 font-medium">examples/sample_rubric.json</code> in the repo.
                             </p>
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-semibold disabled:opacity-50"
-                        >
-                            {loading ? "Uploading…" : "Upload & continue"}
+                        <button type="submit" disabled={loading} className="btn-primary-full">
+                            {loading ? "Uploading…" : "Upload & Continue"}
                         </button>
                     </form>
 
                     {message && (
-                        <p className="mt-6 text-center text-slate-300">{message}</p>
+                        <p className="mt-6 text-center text-slate-600 font-medium">{message}</p>
                     )}
                 </div>
             </div>
