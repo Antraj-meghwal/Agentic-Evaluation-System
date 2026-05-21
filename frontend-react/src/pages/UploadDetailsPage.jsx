@@ -87,6 +87,30 @@ export default function UploadDetailsPage() {
         }
     }
 
+    async function downloadExport(type) {
+        try {
+            setBusy(`export-${type}`);
+            const response = await API.get(`/api/export/${type}/${id}`, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            const extension = type === 'json' ? 'json' : 'csv';
+            link.setAttribute('download', `gradebook_upload_${id}.${extension}`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            setError(
+                e.response?.data?.detail || 
+                (e.response?.data instanceof Blob ? await e.response.data.text() : `Failed to download ${type} export.`)
+            );
+        } finally {
+            setBusy("");
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -163,6 +187,34 @@ export default function UploadDetailsPage() {
                             className="bg-blue-600 hover:bg-blue-500 px-6 py-4 rounded-2xl font-semibold disabled:opacity-50"
                         >
                             View results
+                        </button>
+                    </div>
+
+                    <div className="mt-8 flex flex-wrap gap-4 border-t border-slate-800 pt-8">
+                        <h3 className="text-xl font-semibold w-full">Export Gradebook</h3>
+                        <button
+                            type="button"
+                            disabled={!!busy}
+                            onClick={() => downloadExport("csv")}
+                            className="bg-slate-700 hover:bg-slate-600 px-5 py-3 rounded-xl font-medium disabled:opacity-50"
+                        >
+                            {busy === "export-csv" ? "Exporting..." : "Standard CSV"}
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!!busy}
+                            onClick={() => downloadExport("canvas-csv")}
+                            className="bg-slate-700 hover:bg-slate-600 px-5 py-3 rounded-xl font-medium disabled:opacity-50"
+                        >
+                            {busy === "export-canvas-csv" ? "Exporting..." : "Canvas LMS CSV"}
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!!busy}
+                            onClick={() => downloadExport("json")}
+                            className="bg-slate-700 hover:bg-slate-600 px-5 py-3 rounded-xl font-medium disabled:opacity-50"
+                        >
+                            {busy === "export-json" ? "Exporting..." : "JSON File"}
                         </button>
                     </div>
 
