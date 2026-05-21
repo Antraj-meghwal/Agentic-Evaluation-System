@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from database import SessionLocal
+from models.upload_model import UploadedFile  # noqa: F401 — registers User.uploads relationship
 from models.user_model import User
 from core.security import hash_password
 
