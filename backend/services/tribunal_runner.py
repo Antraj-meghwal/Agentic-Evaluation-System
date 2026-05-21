@@ -16,7 +16,6 @@ from pipeline.verify.escalation_engine import should_escalate_to_human
 from services.pipeline.extract.runner import run_extract_phase
 from services.pipeline.schemas import GradingContext
 from services.plagiarism_service import detect_similar_pairs, detect_visual_plagiarism
-from services.rag_helper import retrieve_similar_answers, store_graded_answer
 from services.tribunal_agents import run_critic, run_grader
 
 
@@ -159,12 +158,7 @@ def run_tribunal_for_upload(
         
         for ctx in extract.contexts:
             tribunal_ctx = build_tribunal_context(ctx, upload_id)
-            ocr_text = tribunal_ctx.get("ocr_text", "")
-            tribunal_ctx["similar_answers"] = retrieve_similar_answers(
-                ctx.question.id,
-                ocr_text,
-            )
-            transcripts[ctx.question.id] = ocr_text
+            transcripts[ctx.question.id] = tribunal_ctx.get("ocr_text", "")
             crop_paths[ctx.question.id] = ctx.crop.image_path
 
             # Execute LangGraph
