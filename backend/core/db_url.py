@@ -1,39 +1,46 @@
 """
-Single source of truth for PostgreSQL connection settings.
-
-Used by: database.py, db/session.py, alembic/env.py, core/config.py
-Matches docker-compose.yml and backend/.env.example exactly.
+Single source of truth for PostgreSQL — reads only from environment / backend/.env.
+No passwords or hosts are hardcoded in Python.
 """
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 
-# Always load backend/.env (not cwd-dependent)
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
 
-# Canonical dev credentials — same as docker-compose.yml
-DB_USER = os.getenv("POSTGRES_USER", "gradeops")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "gradeops")
-DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
-# Default 5433 matches docker-compose host port; use 5432 only for local Homebrew Postgres
-DB_PORT = os.getenv("POSTGRES_PORT", "5433")
-DB_NAME = os.getenv("POSTGRES_DB", "gradeops")
-
-DEFAULT_DATABASE_URL = (
-    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
-
 
 def get_database_url() -> str:
-    url = (os.getenv("DATABASE_URL") or DEFAULT_DATABASE_URL).strip()
-    if not url:
+    explicit = (os.getenv("DATABASE_URL") or "").strip()
+    if explicit:
+        return explicit
+
+    user = (os.getenv("POSTGRES_USER") or "").strip()
+    password = (os.getenv("POSTGRES_PASSWORD") or "").strip()
+    host = (os.getenv("POSTGRES_HOST") or "localhost").strip()
+    port = (os.getenv("POSTGRES_PORT") or "").strip()
+    name = (os.getenv("POSTGRES_DB") or "").strip()
+
+    missing = [
+        k
+        for k, v in [
+            ("POSTGRES_USER", user),
+            ("POSTGRES_PASSWORD", password),
+            ("POSTGRES_PORT", port),
+            ("POSTGRES_DB", name),
+        ]
+        if not v
+    ]
+    if missing:
         raise RuntimeError(
-            f"DATABASE_URL is empty. Copy {BACKEND_DIR / '.env.example'} to "
-            f"{BACKEND_DIR / '.env'} or set DATABASE_URL."
+            f"Set DATABASE_URL or all of {', '.join(missing)} in {BACKEND_DIR / '.env'}. "
+            f"Copy from {BACKEND_DIR / '.env.example'} and run ./scripts/setup_database.sh"
         )
-    return url
+
+    safe_password = quote_plus(password)
+    return f"postgresql://{user}:{safe_password}@{host}:{port}/{name}"

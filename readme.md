@@ -16,11 +16,11 @@ To ensure fairness and reliability, AI-generated evaluations are reviewed throug
 **Before pushing to GitHub:** [docs/SECURITY.md](docs/SECURITY.md) and `./scripts/check-secrets.sh`
 
 ```bash
-docker compose up -d
-cp backend/.env.example backend/.env    # set SECRET_KEY; PIPELINE_DRY_RUN=true for first run
+./scripts/setup_database.sh              # DB + migrations (Docker 5433 or local 5432)
+./scripts/check-secrets.sh               # before git push
 cp frontend-react/.env.example frontend-react/.env.local
 cd backend && python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && alembic upgrade head && uvicorn main:app --reload
+pip install -r requirements.txt && uvicorn main:app --reload
 # new terminal:
 cd frontend-react && npm install && npm run dev
 ```

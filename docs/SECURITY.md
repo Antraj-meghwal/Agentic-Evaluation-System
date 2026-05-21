@@ -1,46 +1,40 @@
-# Security checklist (before GitHub push)
+# Security — never commit credentials
 
-## Never commit
+## Files that must stay local (gitignored)
 
-- `backend/.env`, `frontend-react/.env`, or any file with real tokens
-- Hugging Face tokens (`hf_...`)
-- Database passwords in `alembic.ini` or source code
-- User-uploaded PDFs/images under `backend/uploads/`
-- Private keys (`.pem`, `credentials.json`)
+| File | Purpose |
+|------|---------|
+| `backend/.env` | API secrets, `DATABASE_URL`, `HF_TOKEN`, `SECRET_KEY` |
+| `frontend-react/.env.local` | `VITE_API_URL` |
+| `.env.compose` | Docker Postgres password |
+| `backend/uploads/*` | Exam PDFs (student data) |
 
-`.gitignore` at the repo root and under `backend/` blocks these patterns.
+Copy examples only:
 
-## Already fixed in this branch
+```bash
+cp backend/.env.example backend/.env
+cp frontend-react/.env.example frontend-react/.env.local
+cp .env.compose.example .env.compose
+```
 
-- `backend/alembic.ini` no longer contains a real `DATABASE_URL` (use `DATABASE_URL` in `.env`).
-- `backend/core/security.py` reads `SECRET_KEY` from environment via `core/config.py`.
-- Sample uploads removed from Git tracking (runtime data only).
-
-## If a secret was ever committed
-
-If you previously committed a real password or token (e.g. old `alembic.ini` with `abcd1234`):
-
-1. **Rotate** the credential immediately (new DB password, revoke HF token).
-2. **Scrub Git history** before mentors clone, or the secret remains in old commits:
-
-   ```bash
-   # Example: remove a leaked file from all history (install git-filter-repo first)
-   git filter-repo --path backend/alembic.ini --invert-paths
-   # Or use BFG Repo-Cleaner — see https://rtyley.github.io/bfg-repo-cleaner/
-   ```
-
-3. Force-push only if you own the repo and coordinate with collaborators.
-
-## Mentor-safe defaults
-
-- `PIPELINE_DRY_RUN=true` in `.env.example` — runs full UI without paid APIs.
-- `docker-compose.yml` uses **dev-only** credentials (`gradeops`/`gradeops`) documented in SETUP — not production secrets.
-- JWT `SECRET_KEY` must be set per machine; no shared production key in the repo.
-
-## Pre-push script
+## Before every `git push`
 
 ```bash
 ./scripts/check-secrets.sh
+git status   # must NOT list .env or .env.compose
 ```
 
-Fix any reported issues before `git push`.
+## No hardcoded secrets in Python
+
+- `backend/core/db_url.py` reads `DATABASE_URL` or `POSTGRES_*` from `.env` only.
+- `alembic.ini` has no database URL.
+- JWT `SECRET_KEY` and `HF_TOKEN` come from environment only.
+
+## Docker dev passwords
+
+`docker-compose.yml` loads `.env.compose` (gitignored). The example file uses shared **dev-only** values for local machines — not for production.
+
+## If you ever committed a real token or password
+
+1. Revoke/rotate it immediately.
+2. Old commits still contain it — use [git-filter-repo](https://github.com/newren/git-filter-repo) or BFG before making the repo public.

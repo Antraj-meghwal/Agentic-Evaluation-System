@@ -21,37 +21,34 @@ cd Agentic-Evaluation-System
 **Never commit these files:** `backend/.env`, `frontend-react/.env`, anything under `backend/uploads/` except `.gitkeep`.
 
 ```bash
-cp backend/.env.example backend/.env
-cp frontend-react/.env.example frontend-react/.env
+./scripts/setup_database.sh   # creates backend/.env with correct port + runs migrations
+cp frontend-react/.env.example frontend-react/.env.local
 ```
 
-Edit `backend/.env`:
+Edit `backend/.env` after setup if needed:
 
-- `DATABASE_URL` — use the docker-compose defaults or your own Postgres.
-- `SECRET_KEY` — generate one: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
-- `PIPELINE_DRY_RUN=true` — **recommended for first run** (no Hugging Face billing).
-- `HF_TOKEN` — only if you want live OCR/grading ([create a read token](https://huggingface.co/settings/tokens)).
+- `SECRET_KEY` — `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+- `PIPELINE_DRY_RUN=true` — recommended for first run (no Hugging Face billing)
+- `HF_TOKEN` — only for live OCR/grading
+
+**Never commit:** `backend/.env`, `.env.compose`, `frontend-react/.env.local`. See [docs/SECURITY.md](SECURITY.md).
 
 ## 2. Database (one command — recommended)
 
-Creates/resets DB as user **`gradeops`**, database **`gradeops`**, runs migrations.  
-Matches `docker-compose.yml` and `backend/.env`.
-
 ```bash
-# From repo root (Docker OR local Homebrew Postgres)
 ./scripts/setup_database.sh
 ```
 
-Manual credentials (everywhere the same):
+| Mode | Port | When |
+|------|------|------|
+| **Docker** (Docker Desktop running) | **5433** | Avoids conflict with Homebrew Postgres |
+| **Local Homebrew** | **5432** | When Docker is not running |
 
-| Setting | Value |
-|---------|--------|
-| User | `gradeops` |
-| Password | `gradeops` |
-| Database | `gradeops` |
-| Host | `localhost` |
-| Port | `5432` |
-| URL | `postgresql://gradeops:gradeops@localhost:5432/gradeops` |
+Same credentials everywhere: user **`gradeops`**, password **`gradeops`**, database **`gradeops`**.
+
+```bash
+cp .env.compose.example .env.compose   # only if using Docker
+```
 
 ## 3. Backend
 
