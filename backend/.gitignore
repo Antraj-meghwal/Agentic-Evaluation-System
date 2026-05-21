@@ -8,6 +8,15 @@ venv/
 
 # Environment files
 .env
+.env.*
+!.env.example
+
+# User uploads (runtime data)
+uploads/*
+!uploads/.gitkeep
+
+# Vector store
+data/chroma/
 
 # Logs
 logfile
