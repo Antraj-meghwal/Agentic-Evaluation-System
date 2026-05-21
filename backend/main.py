@@ -50,6 +50,9 @@ from api.routes.results_routes import (
 from api.routes.status_routes import (
     router as status_api_router
 )
+from api.routes.dashboard_routes import (
+    router as dashboard_api_router
+)
 
 
 # Create app
@@ -126,6 +129,11 @@ app.include_router(
     status_api_router,
     prefix="/api/status",
     tags=["status"]
+)
+app.include_router(
+    dashboard_api_router,
+    prefix="/api/dashboard",
+    tags=["dashboard"]
 )
 
 

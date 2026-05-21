@@ -130,10 +130,15 @@ export default function UploadDetailsPage() {
             link.click();
             link.parentNode.removeChild(link);
         } catch (e) {
-            setError(
-                e.response?.data?.detail || 
-                (e.response?.data instanceof Blob ? await e.response.data.text() : `Failed to download ${type} export.`)
-            );
+            let detail = e.response?.data?.detail;
+            if (!detail && e.response?.data instanceof Blob) {
+                try {
+                    detail = await e.response.data.text();
+                } catch {
+                    detail = null;
+                }
+            }
+            setError(detail || `Failed to download ${type} export.`);
         } finally {
             setBusy("");
         }

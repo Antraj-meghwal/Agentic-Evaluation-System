@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 import Navbar from "../components/Navbar"
 
@@ -7,6 +8,7 @@ import API from "../services/api"
 
 export default function UploadPage() {
 
+    const navigate = useNavigate()
     const [file, setFile] = useState(null)
 
     const [message, setMessage] = useState("")
@@ -33,7 +35,7 @@ export default function UploadPage() {
 
             formData.append("file", file)
 
-            await API.post(
+            const response = await API.post(
 
                 "/upload",
 
@@ -51,6 +53,10 @@ export default function UploadPage() {
             setMessage(
                 "File uploaded successfully"
             )
+
+            if (response.data?.id) {
+                navigate(`/uploads/${response.data.id}`)
+            }
 
         } catch {
 

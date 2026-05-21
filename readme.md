@@ -26,3 +26,13 @@ GET  /api/review/review-queue          # TA review queue
 
 Set `HF_TOKEN` in `backend/.env`, or `PIPELINE_DRY_RUN=true` for local dev without API calls.
 
+**Full pipeline (Steps 1–4)**
+
+```bash
+POST /grading/extract/{upload_id}      # Step 1 — OCR + context
+POST /grading/run-async/{upload_id}    # Steps 2–3 — Tribunal + verify (Celery)
+GET  /grading/results/{upload_id}      # Per-question scores
+GET  /api/review/review-queue          # TA review queue
+GET  /api/export/csv/{upload_id}       # Gradebook export
+```
+
