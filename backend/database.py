@@ -1,39 +1,16 @@
-# Load environment variables
-from dotenv import load_dotenv
-
-# Access environment variables
-import os
-
-# SQLAlchemy tools
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 
+from core.db_url import get_database_url
 
-# Load .env file
-load_dotenv()
+DATABASE_URL = get_database_url()
 
-
-# Get database URL from .env
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL is not set. Copy backend/.env.example to backend/.env "
-        "and configure PostgreSQL (see docs/SETUP.md)."
-    )
-
-
-# Create PostgreSQL engine
 engine = create_engine(DATABASE_URL)
 
-
-# Database session factory
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
-    bind=engine
+    bind=engine,
 )
 
-
-# Base class for models
 Base = declarative_base()

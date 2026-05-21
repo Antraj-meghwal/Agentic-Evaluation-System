@@ -1,31 +1,27 @@
 import os
 from logging.config import fileConfig
 
-from dotenv import load_dotenv
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
-from db.base import Base
+from core.db_url import BACKEND_DIR, get_database_url
+from database import Base as LegacyBase
+from db.base import Base as TribunalBase
 from models import *  # noqa: F401, F403
-
-load_dotenv()
+from models.user_model import User  # noqa: F401
+from models.upload_model import UploadedFile  # noqa: F401
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-database_url = os.getenv("DATABASE_URL")
-if not database_url:
-    raise RuntimeError(
-        "DATABASE_URL is not set. Copy backend/.env.example to backend/.env "
-        "and configure your PostgreSQL connection."
-    )
+database_url = get_database_url()
 config.set_main_option("sqlalchemy.url", database_url)
 
-target_metadata = Base.metadata
+# All tables: legacy (users, uploads) + tribunal (batches, crops, grades, …)
+target_metadata = [LegacyBase.metadata, TribunalBase.metadata]
 
 
 def run_migrations_offline() -> None:
@@ -36,7 +32,6 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
@@ -47,13 +42,11 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
         )
-
         with context.begin_transaction():
             context.run_migrations()
 

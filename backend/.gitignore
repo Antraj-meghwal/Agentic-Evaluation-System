@@ -6,10 +6,19 @@ __pycache__/
 *.pyc
 venv/
 
-# Environment files
+# Environment files (never commit real secrets)
 .env
 .env.*
 !.env.example
+.env.local
+.envrc
+
+# Secrets & keys
+*.pem
+*.key
+*.p12
+credentials.json
+secrets.json
 
 # User uploads (runtime data)
 uploads/*

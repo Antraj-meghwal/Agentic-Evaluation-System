@@ -32,13 +32,26 @@ Edit `backend/.env`:
 - `PIPELINE_DRY_RUN=true` — **recommended for first run** (no Hugging Face billing).
 - `HF_TOKEN` — only if you want live OCR/grading ([create a read token](https://huggingface.co/settings/tokens)).
 
-## 2. Start Postgres and Redis
+## 2. Database (one command — recommended)
+
+Creates/resets DB as user **`gradeops`**, database **`gradeops`**, runs migrations.  
+Matches `docker-compose.yml` and `backend/.env`.
 
 ```bash
-docker compose up -d
+# From repo root (Docker OR local Homebrew Postgres)
+./scripts/setup_database.sh
 ```
 
-Wait until both services are healthy (`docker compose ps`).
+Manual credentials (everywhere the same):
+
+| Setting | Value |
+|---------|--------|
+| User | `gradeops` |
+| Password | `gradeops` |
+| Database | `gradeops` |
+| Host | `localhost` |
+| Port | `5432` |
+| URL | `postgresql://gradeops:gradeops@localhost:5432/gradeops` |
 
 ## 3. Backend
 
@@ -47,7 +60,8 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-alembic upgrade head
+# If you skipped setup_database.sh:
+python -m alembic upgrade head
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 

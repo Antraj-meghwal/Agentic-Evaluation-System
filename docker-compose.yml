@@ -10,9 +10,11 @@ services:
       POSTGRES_PASSWORD: gradeops
       POSTGRES_DB: gradeops
     ports:
-      - "5432:5432"
+      # Host 5433 avoids conflict with Homebrew Postgres on 5432
+      - "5433:5432"
     volumes:
       - gradeops_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gradeops -d gradeops"]
       interval: 5s

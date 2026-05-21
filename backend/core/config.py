@@ -1,7 +1,6 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from core.db_url import get_database_url
 
 
 class Settings:
@@ -10,11 +9,8 @@ class Settings:
     environment variables.
     """
 
-    # Database
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/gradeops"
-    )
+    # Database (same URL as docker-compose + alembic)
+    DATABASE_URL: str = get_database_url()
 
     # JWT / Auth
     SECRET_KEY: str = os.getenv(
