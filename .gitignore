@@ -39,6 +39,12 @@ dist-ssr/
 # Runtime uploads & vector store (user data — never commit)
 backend/uploads/*
 !backend/uploads/.gitkeep
+!backend/uploads/processed/.gitkeep
+!backend/uploads/rubrics/.gitkeep
+
+# DocLayNet export (run scripts/download_doclaynet_samples.py)
+examples/doclaynet_samples/*
+!examples/doclaynet_samples/.gitkeep
 backend/data/chroma/
 backend/logfile
 

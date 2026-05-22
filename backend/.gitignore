@@ -23,6 +23,8 @@ secrets.json
 # User uploads (runtime data)
 uploads/*
 !uploads/.gitkeep
+!uploads/processed/.gitkeep
+!uploads/rubrics/.gitkeep
 
 # Vector store
 data/chroma/
