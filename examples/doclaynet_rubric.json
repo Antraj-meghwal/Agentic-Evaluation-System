@@ -1,0 +1,53 @@
+{
+  "exam_id": "doclaynet-layout-test",
+  "course": "DocLayNet",
+  "questions": [
+    {
+      "id": "q1",
+      "title": "Upper page region — text and structure",
+      "max_points": 10,
+      "question_type": "text",
+      "criteria": [
+        {
+          "id": "q1-c1",
+          "description": "OCR extracts readable text from the upper portion of the page",
+          "max_points": 4,
+          "required_keywords": []
+        },
+        {
+          "id": "q1-c2",
+          "description": "Identifies structural elements (headers, titles, or tables) if present",
+          "max_points": 3
+        },
+        {
+          "id": "q1-c3",
+          "description": "Feedback references document layout quality",
+          "max_points": 3
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "title": "Lower page region — figures and footnotes",
+      "max_points": 10,
+      "question_type": "mixed",
+      "criteria": [
+        {
+          "id": "q2-c1",
+          "description": "Handles lower-page content (text blocks, captions, or diagrams)",
+          "max_points": 5
+        },
+        {
+          "id": "q2-c2",
+          "description": "Partial credit for detecting tables, pictures, or footnotes",
+          "max_points": 3
+        },
+        {
+          "id": "q2-c3",
+          "description": "Clear justification tied to rubric criteria",
+          "max_points": 2
+        }
+      ]
+    }
+  ]
+}
